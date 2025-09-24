@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import useStore from '../store';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Button from '../components/Button';
@@ -12,7 +13,12 @@ import BillableItemsModal from './BillableItemsModal';
 import { formatCurrency, CURRENCIES } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
 
-const InvoicesView = ({ projects, clients, timeEntries, setTimeEntries, invoices, setInvoices, expenses, setExpenses, userProfile, recurringInvoices, setRecurringInvoices, showToast, currencySettings, taxSettings }) => {
+const InvoicesView = ({ showToast }) => {
+    const {
+        projects, clients, timeEntries, setTimeEntries, invoices, setInvoices,
+        expenses, setExpenses, userProfile, recurringInvoices, setRecurringInvoices,
+        currencySettings, taxSettings
+    } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(clients.length > 0 ? clients[0].id : '');
     const [selectedCurrency, setSelectedCurrency] = useState('USD');

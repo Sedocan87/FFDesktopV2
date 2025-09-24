@@ -1,18 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-
-// --- INITIAL DATA ---
-import {
-    initialClients,
-    initialProjects,
-    initialTimeEntries,
-    initialInvoices,
-    initialExpenses,
-    initialUserProfile,
-    initialRecurringInvoices,
-    initialTaxSettings,
-    initialCurrencySettings,
-} from './lib/initialData';
+import useStore from './store';
 
 // --- UI Components ---
 import Toast from './components/Toast';
@@ -37,69 +24,36 @@ const App = () => {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
 
-    const [data, setData] = useState({
-        clients: initialClients,
-        projects: initialProjects,
-        timeEntries: initialTimeEntries,
-        invoices: initialInvoices,
-        expenses: initialExpenses,
-        userProfile: initialUserProfile,
-        recurringInvoices: initialRecurringInvoices,
-        taxSettings: initialTaxSettings,
-        currencySettings: initialCurrencySettings,
-    });
-
-    const { clients, projects, timeEntries, invoices, expenses, userProfile, recurringInvoices, taxSettings, currencySettings } = data;
-
-    const setClients = (newClients) => setData(d => ({ ...d, clients: typeof newClients === 'function' ? newClients(d.clients) : newClients }));
-    const setProjects = (newProjects) => setData(d => ({ ...d, projects: typeof newProjects === 'function' ? newProjects(d.projects) : newProjects }));
-    const setTimeEntries = (newTimeEntries) => setData(d => ({ ...d, timeEntries: typeof newTimeEntries === 'function' ? newTimeEntries(d.timeEntries) : newTimeEntries }));
-    const setInvoices = (newInvoices) => setData(d => ({ ...d, invoices: typeof newInvoices === 'function' ? newInvoices(d.invoices) : newInvoices }));
-    const setExpenses = (newExpenses) => setData(d => ({ ...d, expenses: typeof newExpenses === 'function' ? newExpenses(d.expenses) : newExpenses }));
-    const setUserProfile = (newUserProfile) => setData(d => ({ ...d, userProfile: typeof newUserProfile === 'function' ? newUserProfile(d.userProfile) : newUserProfile }));
-    const setRecurringInvoices = (newRecurringInvoices) => setData(d => ({ ...d, recurringInvoices: typeof newRecurringInvoices === 'function' ? newRecurringInvoices(d.recurringInvoices) : newRecurringInvoices }));
-    const setTaxSettings = (newTaxSettings) => setData(d => ({ ...d, taxSettings: typeof newTaxSettings === 'function' ? newTaxSettings(d.taxSettings) : newTaxSettings }));
-    const setCurrencySettings = (newCurrencySettings) => setData(d => ({ ...d, currencySettings: typeof newCurrencySettings === 'function' ? newCurrencySettings(d.currencySettings) : newCurrencySettings }));
-
-
-    const [isTimerRunning, setIsTimerRunning] = useState(false);
-    const [timerStartTime, setTimerStartTime] = useState(null);
-    const [elapsedTime, setElapsedTime] = useState(0);
-    const [timerProjectId, setTimerProjectId] = useState(null);
+    const {
+        clients, projects, timeEntries, invoices, expenses, userProfile,
+        recurringInvoices, taxSettings, currencySettings,
+        isLoading, isTimerRunning, timerStartTime, elapsedTime, timerProjectId,
+        setData, setClients, setProjects, setTimeEntries, setInvoices, setExpenses,
+        setUserProfile, setRecurringInvoices, setTaxSettings, setCurrencySettings,
+        setIsTimerRunning, setTimerStartTime, setElapsedTime, setTimerProjectId,
+        loadData, saveData
+    } = useStore();
 
     const showToast = (message) => {
         setToastMessage(message);
     };
 
     useEffect(() => {
-        invoke('load_data').then(savedData => {
-            if (savedData) {
-                try {
-                    const parsedData = JSON.parse(savedData);
-                    // If the file is empty or just "{}", we don't want to overwrite the initial state
-                    if (Object.keys(parsedData).length > 0) {
-                        setData(parsedData);
-                    }
-                } catch (e) {
-                    console.error("Failed to parse saved data:", e);
-                }
-            }
-        }).catch(console.error).finally(() => setIsLoading(false));
-    }, []);
+        loadData();
+    }, [loadData]);
 
     useEffect(() => {
         if (projects.length > 0 && !timerProjectId) {
             setTimerProjectId(projects[0].id);
         }
-    }, [projects, timerProjectId]);
+    }, [projects, timerProjectId, setTimerProjectId]);
 
     useEffect(() => {
         if (!isLoading) {
-            invoke('save_data', { data: JSON.stringify(data) });
+            saveData();
         }
-    }, [data, isLoading]);
+    }, [clients, projects, timeEntries, invoices, expenses, userProfile, recurringInvoices, taxSettings, currencySettings, isLoading, saveData]);
 
     useEffect(() => {
         let interval = null;
@@ -113,7 +67,7 @@ const App = () => {
                 clearInterval(interval);
             }
         };
-    }, [isTimerRunning, timerStartTime]);
+    }, [isTimerRunning, timerStartTime, setElapsedTime]);
     
      useEffect(() => {
         if (isDarkMode) {
@@ -189,29 +143,15 @@ const App = () => {
         }
         
         switch (activeView) {
-            case 'dashboard': return <DashboardView projects={projects} clients={clients} timeEntries={timeEntries} invoices={invoices} taxSettings={taxSettings} currencySettings={currencySettings} />;
-            case 'projects': return <ProjectsView projects={projects} setProjects={setProjects} clients={clients} currencySettings={currencySettings} showToast={showToast} />;
-            case 'clients': return <ClientsView clients={clients} setClients={setClients} projects={projects} setProjects={setProjects} showToast={showToast} clientProjectCounts={clientProjectCounts} />;
-            case 'invoices': return <InvoicesView projects={projects} clients={clients} timeEntries={timeEntries} setTimeEntries={setTimeEntries} invoices={invoices} setInvoices={setInvoices} expenses={expenses} setExpenses={setExpenses} userProfile={userProfile} recurringInvoices={recurringInvoices} setRecurringInvoices={setRecurringInvoices} showToast={showToast} currencySettings={currencySettings} taxSettings={taxSettings} />;
-            case 'timetracking': return <TimeTrackingView
-                projects={projects}
-                setProjects={setProjects}
-                timeEntries={timeEntries}
-                setTimeEntries={setTimeEntries}
-                showToast={showToast}
-                isTimerRunning={isTimerRunning}
-                setIsTimerRunning={setIsTimerRunning}
-                timerStartTime={timerStartTime}
-                setTimerStartTime={setTimerStartTime}
-                elapsedTime={elapsedTime}
-                setElapsedTime={setElapsedTime}
-                timerProjectId={timerProjectId}
-                setTimerProjectId={setTimerProjectId}
-            />;
-            case 'reporting': return <ReportingView projects={projects} clients={clients} timeEntries={timeEntries} expenses={expenses} taxSettings={taxSettings} />;
-            case 'expenses': return <ExpensesView projects={projects} setExpenses={setExpenses} expenses={expenses} showToast={showToast} />;
-            case 'settings': return <SettingsView userProfile={userProfile} setUserProfile={setUserProfile} taxSettings={taxSettings} setTaxSettings={setTaxSettings} currencySettings={currencySettings} setCurrencySettings={setCurrencySettings} showToast={showToast} onImport={handleImport} onExport={handleExportData} />;
-            default: return <DashboardView projects={projects} clients={clients} />;
+            case 'dashboard': return <DashboardView />;
+            case 'projects': return <ProjectsView showToast={showToast} />;
+            case 'clients': return <ClientsView showToast={showToast} clientProjectCounts={clientProjectCounts} />;
+            case 'invoices': return <InvoicesView showToast={showToast} />;
+            case 'timetracking': return <TimeTrackingView showToast={showToast} />;
+            case 'reporting': return <ReportingView />;
+            case 'expenses': return <ExpensesView showToast={showToast} />;
+            case 'settings': return <SettingsView showToast={showToast} onImport={handleImport} onExport={handleExportData} />;
+            default: return <DashboardView />;
         }
     };
     

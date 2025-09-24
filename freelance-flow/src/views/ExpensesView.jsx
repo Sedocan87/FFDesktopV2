@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Dialog from '../components/Dialog';
@@ -9,7 +10,8 @@ import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 import { formatCurrency } from '../lib/utils';
 
-const ExpensesView = ({ projects, setExpenses, expenses, showToast }) => {
+const ExpensesView = ({ showToast }) => {
+    const { projects, expenses, setExpenses } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [expenseToDelete, setExpenseToDelete] = useState(null);
