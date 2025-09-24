@@ -9,7 +9,8 @@ import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 import { formatCurrency, CURRENCIES } from '../lib/utils';
 
-const RecurringInvoicesView = ({ clients, recurringInvoices, setRecurringInvoices, showToast }) => {
+const RecurringInvoicesView = ({ showToast }) => {
+    const { clients, recurringInvoices, addRecurringInvoice, updateRecurringInvoice, deleteRecurringInvoice } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingRecurring, setEditingRecurring] = useState(null);
     const [recurringToDelete, setRecurringToDelete] = useState(null);
@@ -45,52 +46,52 @@ const RecurringInvoicesView = ({ clients, recurringInvoices, setRecurringInvoice
     const openEditDialog = (rec) => {
         setEditingRecurring(rec);
         setFormState({
-            clientName: rec.clientName,
+            clientName: rec.client_name,
             frequency: rec.frequency,
-            startDate: rec.nextDueDate,
+            startDate: rec.next_due_date,
             lineItems: rec.items,
             currency: rec.currency,
         });
         setIsDialogOpen(true);
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
         const totalAmount = formState.lineItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
         if (editingRecurring) {
             const updatedRecurring = {
                 ...editingRecurring,
-                clientName: formState.clientName,
+                client_name: formState.clientName,
                 frequency: formState.frequency,
-                nextDueDate: formState.startDate,
+                next_due_date: formState.startDate,
                 amount: totalAmount,
                 currency: formState.currency,
                 items: formState.lineItems.map(item => ({...item, amount: parseFloat(item.amount) || 0 }))
             };
-            setRecurringInvoices(recurringInvoices.map(r => r.id === editingRecurring.id ? updatedRecurring : r));
+            await updateRecurringInvoice(updatedRecurring);
             showToast("Recurring profile updated!");
 
         } else {
             const newRecurring = {
                 id: recurringInvoices.length > 0 ? Math.max(...recurringInvoices.map(i => i.id)) + 1 : 1,
-                clientName: formState.clientName,
+                client_name: formState.clientName,
                 frequency: formState.frequency,
-                nextDueDate: formState.startDate,
+                next_due_date: formState.startDate,
                 amount: totalAmount,
                 currency: formState.currency,
                 items: formState.lineItems.map(item => ({...item, amount: parseFloat(item.amount) || 0 }))
             };
-            setRecurringInvoices([newRecurring, ...recurringInvoices]);
+            await addRecurringInvoice(newRecurring);
             showToast("Recurring profile created!");
         }
 
         setIsDialogOpen(false);
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (recurringToDelete) {
-            setRecurringInvoices(recurringInvoices.filter(r => r.id !== recurringToDelete.id));
+            await deleteRecurringInvoice(recurringToDelete.id);
             setRecurringToDelete(null);
             showToast("Recurring profile deleted.");
         }

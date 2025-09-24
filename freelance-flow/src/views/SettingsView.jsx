@@ -10,15 +10,15 @@ import { CURRENCIES } from '../lib/utils';
 
 const SettingsView = ({ showToast, onImport, onExport }) => {
     const {
-        userProfile, setUserProfile, taxSettings, setTaxSettings,
-        currencySettings, setCurrencySettings
+        userProfile, updateUserProfile, taxSettings, updateTaxSettings,
+        currencySettings, updateCurrencySettings
     } = useStore();
     const [isEditingCompany, setIsEditingCompany] = useState(false);
     const [companyForm, setCompanyForm] = useState(userProfile);
     const [currentTaxRate, setCurrentTaxRate] = useState(taxSettings.rate);
-    const [currentInternalCostRate, setCurrentInternalCostRate] = useState(taxSettings.internalCostRate);
+    const [currentInternalCostRate, setCurrentInternalCostRate] = useState(taxSettings.internal_cost_rate);
     const [currentDefaultCurrency, setCurrentDefaultCurrency] = useState(currencySettings.default);
-    const [currentInvoiceLanguage, setCurrentInvoiceLanguage] = useState(currencySettings.invoiceLanguage || 'en');
+    const [currentInvoiceLanguage, setCurrentInvoiceLanguage] = useState(currencySettings.invoice_language || 'en');
     const inputFileRef = useRef(null);
 
     const onImportClick = () => {
@@ -61,30 +61,30 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
         }
     };
 
-    const handleSaveCompanyInfo = (e) => {
+    const handleSaveCompanyInfo = async (e) => {
         e.preventDefault();
-        setUserProfile(companyForm);
+        await updateUserProfile(companyForm);
         setIsEditingCompany(false);
         showToast("Company information updated.");
     };
 
-    const handleSaveFinancialSettings = (e) => {
+    const handleSaveFinancialSettings = async (e) => {
         e.preventDefault();
         const rate = parseFloat(currentTaxRate);
         const internalRate = parseFloat(currentInternalCostRate);
         if (!isNaN(rate) && rate >= 0 && rate <= 100 && !isNaN(internalRate) && internalRate >= 0) {
-            setTaxSettings({ rate, internalCostRate: internalRate });
+            await updateTaxSettings({ rate, internal_cost_rate: internalRate });
             showToast("Financial settings saved.");
         } else {
            showToast("Please enter valid numbers for rates.");
         }
     };
 
-    const handleSaveCurrencySettings = (e) => {
+    const handleSaveCurrencySettings = async (e) => {
         e.preventDefault();
-        setCurrencySettings({
+        await updateCurrencySettings({
             default: currentDefaultCurrency,
-            invoiceLanguage: currentInvoiceLanguage
+            invoice_language: currentInvoiceLanguage
         });
         showToast("Currency settings saved.");
     };

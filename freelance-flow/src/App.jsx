@@ -32,7 +32,7 @@ const App = () => {
         setData, setClients, setProjects, setTimeEntries, setInvoices, setExpenses,
         setUserProfile, setRecurringInvoices, setTaxSettings, setCurrencySettings,
         setIsTimerRunning, setTimerStartTime, setElapsedTime, setTimerProjectId,
-        loadData, saveData
+        loadInitialData
     } = useStore();
 
     const showToast = (message) => {
@@ -40,20 +40,14 @@ const App = () => {
     };
 
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        loadInitialData();
+    }, [loadInitialData]);
 
     useEffect(() => {
         if (projects.length > 0 && !timerProjectId) {
             setTimerProjectId(projects[0].id);
         }
     }, [projects, timerProjectId, setTimerProjectId]);
-
-    useEffect(() => {
-        if (!isLoading) {
-            saveData();
-        }
-    }, [clients, projects, timeEntries, invoices, expenses, userProfile, recurringInvoices, taxSettings, currencySettings, isLoading, saveData]);
 
     useEffect(() => {
         let interval = null;
