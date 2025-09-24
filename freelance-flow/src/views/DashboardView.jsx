@@ -3,7 +3,7 @@ import Card from '../components/Card';
 import TaxEstimator from './TaxEstimator';
 import { formatCurrency } from '../lib/utils';
 
-const DashboardView = ({ projects, clients, timeEntries, invoices, taxSettings, currencySettings }) => {
+const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices = [], taxSettings = {}, currencySettings = {} }) => {
     const projectsWithData = projects.filter(p => p);
     const totalProjects = projectsWithData.length;
     const totalClients = clients.length;

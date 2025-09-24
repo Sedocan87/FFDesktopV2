@@ -122,14 +122,19 @@ const App = () => {
     );
     
     const clientProjectCounts = useMemo(() => {
+        const clientNameMap = clients.reduce((acc, client) => {
+            acc[client.id] = client.name;
+            return acc;
+        }, {});
+
         return projects.reduce((acc, project) => {
-            const clientName = project.client;
+            const clientName = clientNameMap[project.client_id];
             if (clientName) {
                 acc[clientName] = (acc[clientName] || 0) + 1;
             }
             return acc;
         }, {});
-    }, [projects]);
+    }, [projects, clients]);
 
     const renderView = () => {
         if (isLoading) {
@@ -137,15 +142,34 @@ const App = () => {
         }
         
         switch (activeView) {
-            case 'dashboard': return <DashboardView />;
+            case 'dashboard': return <DashboardView 
+                projects={projects}
+                clients={clients}
+                timeEntries={timeEntries}
+                invoices={invoices}
+                taxSettings={taxSettings}
+                currencySettings={currencySettings}
+            />;
             case 'projects': return <ProjectsView showToast={showToast} />;
             case 'clients': return <ClientsView showToast={showToast} clientProjectCounts={clientProjectCounts} />;
             case 'invoices': return <InvoicesView showToast={showToast} />;
             case 'timetracking': return <TimeTrackingView showToast={showToast} />;
-            case 'reporting': return <ReportingView />;
+            case 'reporting': return <ReportingView 
+                projects={projects}
+                timeEntries={timeEntries}
+                expenses={expenses}
+                taxSettings={taxSettings}
+            />;
             case 'expenses': return <ExpensesView showToast={showToast} />;
             case 'settings': return <SettingsView showToast={showToast} onImport={handleImport} onExport={handleExportData} />;
-            default: return <DashboardView />;
+            default: return <DashboardView 
+                projects={projects}
+                clients={clients}
+                timeEntries={timeEntries}
+                invoices={invoices}
+                taxSettings={taxSettings}
+                currencySettings={currencySettings}
+            />;
         }
     };
     

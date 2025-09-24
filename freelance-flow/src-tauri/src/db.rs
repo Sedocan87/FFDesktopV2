@@ -10,13 +10,11 @@ pub fn get_db_path(app: &AppHandle) -> PathBuf {
     path.join("freelanceflow.db")
 }
 
-pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
-    let db_path = get_db_path(app);
-    let conn = Connection::open(db_path)?;
+pub fn initialize_db(conn: &Connection) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS clients (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT
         )",
@@ -25,7 +23,7 @@ pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS projects (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             client_id INTEGER,
             rate REAL,
@@ -36,7 +34,7 @@ pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS time_entries (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             project_id INTEGER NOT NULL,
             start_time TEXT NOT NULL,
             end_time TEXT,
@@ -60,7 +58,7 @@ pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS expenses (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             project_id INTEGER,
             description TEXT NOT NULL,
             amount REAL NOT NULL,
@@ -73,7 +71,7 @@ pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS user_profile (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             company_name TEXT,
             company_email TEXT,
             company_address TEXT,
@@ -84,7 +82,7 @@ pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS recurring_invoices (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             client_name TEXT NOT NULL,
             frequency TEXT NOT NULL,
             next_due_date TEXT NOT NULL,
@@ -96,7 +94,7 @@ pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tax_settings (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             rate REAL NOT NULL,
             internal_cost_rate REAL NOT NULL
         )",
@@ -105,7 +103,7 @@ pub fn initialize_db(app: &AppHandle) -> Result<(), rusqlite::Error> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS currency_settings (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             default_currency TEXT NOT NULL,
             invoice_language TEXT NOT NULL
         )",
@@ -153,7 +151,7 @@ pub fn migrate_data(app: &AppHandle, conn: &Connection) -> Result<(), Box<dyn st
 
         conn.execute(
             "INSERT OR IGNORE INTO time_entries (id, project_id, start_time, end_time) VALUES (?1, ?2, ?3, ?4)",
-            rusqlite::params![entry.id, entry.projectId, start_time, end_time],
+            rusqlite::params![entry.id, entry.project_id, start_time, end_time],
         )?;
     }
 

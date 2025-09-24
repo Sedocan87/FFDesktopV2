@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import useStore from '../store';
+
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { formatCurrency } from '../lib/utils';
 
-const ReportingView = () => {
-    const { projects, timeEntries, expenses, taxSettings } = useStore();
+const ReportingView = ({ projects, timeEntries, expenses, taxSettings }) => {
     const [filter, setFilter] = useState('all'); // 'week', 'month', 'all'
 
     const getFilteredEntries = useCallback(() => {

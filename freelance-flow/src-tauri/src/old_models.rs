@@ -4,6 +4,7 @@ use serde::Deserialize;
 pub struct OldData {
     pub clients: Vec<OldClient>,
     pub projects: Vec<OldProject>,
+    #[serde(default)]
     pub time_entries: Vec<OldTimeEntry>,
 }
 
@@ -25,7 +26,8 @@ pub struct OldProject {
 #[derive(Deserialize)]
 pub struct OldTimeEntry {
     pub id: i32,
-    pub projectId: i32,
+    #[serde(rename = "projectId")]
+    pub project_id: i32,
     pub hours: f64,
     pub date: String,
 }
