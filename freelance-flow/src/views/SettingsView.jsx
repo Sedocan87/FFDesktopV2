@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Input from '../components/Input';
@@ -7,7 +8,11 @@ import Select from '../components/Select';
 import Textarea from '../components/Textarea';
 import { CURRENCIES } from '../lib/utils';
 
-const SettingsView = ({ userProfile, setUserProfile, taxSettings, setTaxSettings, currencySettings, setCurrencySettings, showToast, onImport, onExport }) => {
+const SettingsView = ({ showToast, onImport, onExport }) => {
+    const {
+        userProfile, setUserProfile, taxSettings, setTaxSettings,
+        currencySettings, setCurrencySettings
+    } = useStore();
     const [isEditingCompany, setIsEditingCompany] = useState(false);
     const [companyForm, setCompanyForm] = useState(userProfile);
     const [currentTaxRate, setCurrentTaxRate] = useState(taxSettings.rate);

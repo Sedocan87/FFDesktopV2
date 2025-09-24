@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Dialog from '../components/Dialog';
@@ -9,7 +10,8 @@ import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 import { CURRENCIES } from '../lib/utils';
 
-const ProjectsView = ({ projects, setProjects, clients, currencySettings, showToast }) => {
+const ProjectsView = ({ showToast }) => {
+    const { projects, setProjects, clients, currencySettings } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
     const [projectToDelete, setProjectToDelete] = useState(null);

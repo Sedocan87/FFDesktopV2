@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Dialog from '../components/Dialog';
@@ -9,11 +10,12 @@ import Textarea from '../components/Textarea';
 import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 
-const TimeTrackingView = ({
-    projects, setProjects, timeEntries, setTimeEntries, showToast,
-    isTimerRunning, setIsTimerRunning, timerStartTime, setTimerStartTime,
-    elapsedTime, setElapsedTime, timerProjectId, setTimerProjectId
-}) => {
+const TimeTrackingView = ({ showToast }) => {
+    const {
+        projects, setProjects, timeEntries, setTimeEntries,
+        isTimerRunning, setIsTimerRunning, timerStartTime, setTimerStartTime,
+        elapsedTime, setElapsedTime, timerProjectId, setTimerProjectId
+    } = useStore();
     const [selectedProject, setSelectedProject] = useState(projects.length > 0 ? projects[0].id : '');
     const [hours, setHours] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);

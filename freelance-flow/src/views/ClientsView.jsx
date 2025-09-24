@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Dialog from '../components/Dialog';
@@ -7,7 +8,8 @@ import Label from '../components/Label';
 import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 
-const ClientsView = ({ clients, setClients, projects, setProjects, showToast, clientProjectCounts }) => {
+const ClientsView = ({ showToast, clientProjectCounts }) => {
+    const { clients, setClients, projects, setProjects } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingClient, setEditingClient] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
