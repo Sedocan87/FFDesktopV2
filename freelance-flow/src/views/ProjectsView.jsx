@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -8,34 +8,38 @@ import Label from '../components/Label';
 import Select from '../components/Select';
 import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
-import { CURRENCIES } from '../lib/utils';
 
 const ProjectsView = ({ showToast }) => {
-    const { projects, setProjects, clients, currencySettings } = useStore();
+    const { projects, clients, timeEntries, addProject, updateProject, deleteProject } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
     const [projectToDelete, setProjectToDelete] = useState(null);
 
     const [formState, setFormState] = useState({
         name: '',
-        client: clients.length > 0 ? clients[0].name : '',
-        status: 'Planning',
-        billingType: 'Hourly',
-        billingRate: 100,
-        budget: 5000,
-        currency: currencySettings.default,
+        clientId: clients.length > 0 ? clients[0].id : '',
+        rate: 100,
     });
+
+    const clientMap = useMemo(() => clients.reduce((acc, client) => {
+        acc[client.id] = client.name;
+        return acc;
+    }, {}), [clients]);
+
+    const projectHours = useMemo(() => timeEntries.reduce((acc, entry) => {
+        if (entry.end_time) {
+            const hours = (new Date(entry.end_time) - new Date(entry.start_time)) / 3600000;
+            acc[entry.project_id] = (acc[entry.project_id] || 0) + hours;
+        }
+        return acc;
+    }, {}), [timeEntries]);
 
     const openAddDialog = () => {
         setEditingProject(null);
         setFormState({
             name: '',
-            client: clients.length > 0 ? clients[0].name : '',
-            status: 'Planning',
-            billingType: 'Hourly',
-            billingRate: 100,
-            budget: 5000,
-            currency: currencySettings.default,
+            clientId: clients.length > 0 ? clients[0].id : '',
+            rate: 100,
         });
         setIsDialogOpen(true);
     };
@@ -44,12 +48,8 @@ const ProjectsView = ({ showToast }) => {
         setEditingProject(project);
         setFormState({
             name: project.name,
-            client: project.client,
-            status: project.status,
-            billingType: project.billing.type,
-            billingRate: project.billing.rate || 100,
-            budget: project.budget || 5000,
-            currency: project.currency,
+            clientId: project.client_id,
+            rate: project.rate || 100,
         });
         setIsDialogOpen(true);
     };
@@ -64,52 +64,26 @@ const ProjectsView = ({ showToast }) => {
         setFormState(prev => ({...prev, [id]: value}));
     };
 
-    const handleSaveProject = (e) => {
+    const handleSaveProject = async (e) => {
         e.preventDefault();
-        if (formState.name.trim() && formState.client) {
-            const projectData = {
-                name: formState.name,
-                client: formState.client,
-                status: formState.status,
-                currency: formState.currency,
-                billing: {
-                    type: formState.billingType,
-                    rate: formState.billingType === 'Hourly' ? parseFloat(formState.billingRate) : undefined,
-                },
-                budget: formState.billingType === 'Fixed Price' ? parseFloat(formState.budget) : null,
-            };
-
+        if (formState.name.trim() && formState.clientId) {
             if (editingProject) {
-                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
+                await updateProject(editingProject.id, formState.name, parseInt(formState.clientId), parseFloat(formState.rate));
                 showToast("Project updated successfully!");
             } else {
-                 const newProject = {
-                    id: projects.length > 0 ? Math.max(...projects.map(p => p.id)) + 1 : 1,
-                    ...projectData,
-                    tracked: 0,
-                };
-                setProjects([newProject, ...projects]);
+                await addProject(formState.name, parseInt(formState.clientId), parseFloat(formState.rate));
                 showToast("Project created successfully!");
             }
             closeDialog();
         }
     };
 
-    const handleDeleteProject = () => {
+    const handleDeleteProject = async () => {
         if (projectToDelete) {
-            setProjects(projects.filter(p => p.id !== projectToDelete.id));
+            await deleteProject(projectToDelete.id);
             setProjectToDelete(null);
             showToast("Project deleted.");
         }
-    };
-
-    const statusOptions = ["Planning", "In Progress", "Completed", "On Hold"];
-
-    const statusColors = {
-        "In Progress": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-        "Completed": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-        "Planning": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-        "On Hold": "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
     };
 
     return (
@@ -128,7 +102,6 @@ const ProjectsView = ({ showToast }) => {
                         <tr className="border-b dark:border-slate-800">
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Project Name</th>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Client</th>
-                            <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Status</th>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Hours Tracked</th>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Actions</th>
                         </tr>
@@ -139,13 +112,8 @@ const ProjectsView = ({ showToast }) => {
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-300">
                                     {project.name}
                                 </td>
-                                <td className="p-4 text-slate-600 dark:text-slate-400">{project.client}</td>
-                                <td className="p-4">
-                                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[project.status]}`}>
-                                        {project.status}
-                                    </span>
-                                </td>
-                                <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{project.tracked.toFixed(2)}</td>
+                                <td className="p-4 text-slate-600 dark:text-slate-400">{clientMap[project.client_id]}</td>
+                                <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{(projectHours[project.id] || 0).toFixed(2)}</td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">
                                         <Button variant="ghost" className="px-2" onClick={() => openEditDialog(project)}>
@@ -169,54 +137,16 @@ const ProjectsView = ({ showToast }) => {
                         <Input id="name" type="text" value={formState.name} onChange={handleFormChange} required />
                     </div>
                     <div>
-                       <Label htmlFor="client">Client</Label>
-                       <Select id="client" value={formState.client} onChange={handleFormChange}>
+                       <Label htmlFor="clientId">Client</Label>
+                       <Select id="clientId" value={formState.clientId} onChange={handleFormChange}>
                            {clients.map(client => (
-                               <option key={client.id} value={client.name}>{client.name}</option>
+                               <option key={client.id} value={client.id}>{client.name}</option>
                            ))}
                        </Select>
                    </div>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         <div>
-                            <Label htmlFor="billingType">Billing Method</Label>
-                            <Select id="billingType" value={formState.billingType} onChange={handleFormChange}>
-                               <option>Hourly</option>
-                               <option>Fixed Price</option>
-                            </Select>
-                         </div>
-                         {formState.billingType === 'Hourly' ? (
-                             <div>
-                                <Label htmlFor="billingRate">Hourly Rate</Label>
-                                <div className="relative">
-                                     <Input id="billingRate" type="number" value={formState.billingRate} onChange={handleFormChange} className="pl-8"/>
-                                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">{CURRENCIES.find(c=>c.code === formState.currency)?.symbol || '$'}</span>
-                                </div>
-                             </div>
-                         ) : (
-                             <div>
-                                <Label htmlFor="budget">Project Budget</Label>
-                                 <div className="relative">
-                                    <Input id="budget" type="number" value={formState.budget} onChange={handleFormChange} className="pl-8"/>
-                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">{CURRENCIES.find(c=>c.code === formState.currency)?.symbol || '$'}</span>
-                                 </div>
-                             </div>
-                         )}
-                     </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         <div>
-                            <Label htmlFor="currency">Currency</Label>
-                            <Select id="currency" value={formState.currency} onChange={handleFormChange}>
-                               {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}
-                            </Select>
-                         </div>
-                         <div>
-                            <Label htmlFor="status">Status</Label>
-                            <Select id="status" value={formState.status} onChange={handleFormChange}>
-                                {statusOptions.map(status => (
-                                    <option key={status} value={status}>{status}</option>
-                                ))}
-                            </Select>
-                        </div>
+                   <div>
+                        <Label htmlFor="rate">Hourly Rate</Label>
+                        <Input id="rate" type="number" value={formState.rate} onChange={handleFormChange} />
                     </div>
                     <div className="flex justify-end gap-4 pt-4">
                         <Button type="button" variant="secondary" onClick={closeDialog}>Cancel</Button>

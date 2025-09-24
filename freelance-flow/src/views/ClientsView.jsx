@@ -9,7 +9,7 @@ import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 
 const ClientsView = ({ showToast, clientProjectCounts }) => {
-    const { clients, setClients, projects, setProjects } = useStore();
+    const { clients, addClient, updateClient, deleteClient } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingClient, setEditingClient] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
@@ -36,33 +36,23 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
         setEditingClient(null);
     };
 
-    const handleSaveClient = (e) => {
+    const handleSaveClient = async (e) => {
         e.preventDefault();
         if (formName.trim() && formEmail.trim()) {
             if (editingClient) {
-                // Update existing client
-                const oldName = editingClient.name;
-                setClients(clients.map(c => c.id === editingClient.id ? { ...c, name: formName, email: formEmail } : c));
-                setProjects(projects.map(p => p.client === oldName ? { ...p, client: formName } : p));
+                await updateClient(editingClient.id, formName, formEmail);
                 showToast("Client updated successfully!");
             } else {
-                // Add new client
-                const newClient = {
-                    id: clients.length > 0 ? Math.max(...clients.map(c => c.id)) + 1 : 1,
-                    name: formName,
-                    email: formEmail
-                };
-                setClients([newClient, ...clients]);
+                await addClient(formName, formEmail);
                 showToast("Client added successfully!");
             }
             closeDialog();
         }
     };
 
-    const handleDeleteClient = () => {
+    const handleDeleteClient = async () => {
         if (clientToDelete) {
-            setClients(clients.filter(c => c.id !== clientToDelete.id));
-            setProjects(projects.map(p => p.client === clientToDelete.name ? { ...p, client: 'No Client' } : p));
+            await deleteClient(clientToDelete.id);
             setClientToDelete(null);
             showToast("Client deleted.");
         }

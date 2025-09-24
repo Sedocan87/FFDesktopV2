@@ -11,7 +11,7 @@ import TrashIcon from '../components/icons/TrashIcon';
 import { formatCurrency } from '../lib/utils';
 
 const ExpensesView = ({ showToast }) => {
-    const { projects, expenses, setExpenses } = useStore();
+    const { projects, expenses, addExpense, updateExpense, deleteExpense } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
     const [expenseToDelete, setExpenseToDelete] = useState(null);
@@ -39,11 +39,11 @@ const ExpensesView = ({ showToast }) => {
 
     const openEditDialog = (expense) => {
         setEditingExpense(expense);
-        setFormProjectId(expense.projectId);
+        setFormProjectId(expense.project_id);
         setFormAmount(expense.amount);
         setFormDate(expense.date);
         setFormDescription(expense.description);
-        setFormIsBillable(expense.isBillable);
+        setFormIsBillable(expense.is_billable);
         setIsDialogOpen(true);
     };
 
@@ -52,33 +52,41 @@ const ExpensesView = ({ showToast }) => {
         setEditingExpense(null);
     };
 
-    const handleSaveExpense = (e) => {
+    const handleSaveExpense = async (e) => {
         e.preventDefault();
         const amountNum = parseFloat(formAmount);
         if (formDescription.trim() && formProjectId && !isNaN(amountNum) && amountNum > 0) {
             if (editingExpense) {
-                setExpenses(expenses.map(ex => ex.id === editingExpense.id ? { ...ex, projectId: parseInt(formProjectId), amount: amountNum, date: formDate, description: formDescription, isBillable: formIsBillable } : ex));
+                const updatedExpense = {
+                    ...editingExpense,
+                    project_id: parseInt(formProjectId),
+                    amount: amountNum,
+                    date: formDate,
+                    description: formDescription,
+                    is_billable: formIsBillable,
+                };
+                await updateExpense(updatedExpense);
                 showToast("Expense updated!");
             } else {
                 const newExpense = {
                     id: expenses.length > 0 ? Math.max(...expenses.map(ex => ex.id)) + 1 : 1,
-                    projectId: parseInt(formProjectId),
+                    project_id: parseInt(formProjectId),
                     amount: amountNum,
                     date: formDate,
                     description: formDescription,
-                    isBilled: false,
-                    isBillable: formIsBillable,
+                    is_billed: false,
+                    is_billable: formIsBillable,
                 };
-                setExpenses([newExpense, ...expenses]);
+                await addExpense(newExpense);
                 showToast("Expense added!");
             }
             closeDialog();
         }
     };
 
-    const handleDeleteExpense = () => {
+    const handleDeleteExpense = async () => {
         if (expenseToDelete) {
-            setExpenses(expenses.filter(ex => ex.id !== expenseToDelete.id));
+            await deleteExpense(expenseToDelete.id);
             setExpenseToDelete(null);
             showToast("Expense deleted.");
         }

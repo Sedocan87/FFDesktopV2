@@ -15,8 +15,8 @@ import { invoiceTranslations } from '../lib/invoiceTranslations';
 
 const InvoicesView = ({ showToast }) => {
     const {
-        projects, clients, timeEntries, setTimeEntries, invoices, setInvoices,
-        expenses, setExpenses, userProfile, recurringInvoices, setRecurringInvoices,
+        projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
+        expenses, userProfile, recurringInvoices,
         currencySettings, taxSettings
     } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -33,7 +33,7 @@ const InvoicesView = ({ showToast }) => {
         return acc;
     }, {}), [projects]);
 
-    const handleCreateInvoiceFromSelectedItems = (selectedEntries, selectedExpenses) => {
+    const handleCreateInvoiceFromSelectedItems = async (selectedEntries, selectedExpenses) => {
         if (!selectedClient) return;
 
         const clientObj = clients.find(c => c.id === parseInt(selectedClient));
@@ -45,12 +45,12 @@ const InvoicesView = ({ showToast }) => {
         }
 
         const timeInvoiceItems = selectedEntries.map(entry => {
-            const project = projectMap[entry.projectId];
-            const rate = entry.rate; // Use the rate from the entry
+            const project = projectMap[entry.project_id];
+            const rate = project.rate; // Use the rate from the project
             return {
                 id: `time-${entry.id}`,
-                description: `${project?.name || 'Project'} - ${entry.description || 'Work done'} on ${entry.date}`,
-                hours: entry.hours,
+                description: `${project?.name || 'Project'} - Work done on ${new Date(entry.start_time).toLocaleDateString()}`,
+                hours: (new Date(entry.end_time) - new Date(entry.start_time)) / 3600000,
                 rate: rate
             }
         });
@@ -67,28 +67,16 @@ const InvoicesView = ({ showToast }) => {
 
         const newInvoice = {
             id: `INV-${String(invoices.length + 1).padStart(3, '0')}`,
-            clientName: clientObj.name,
-            issueDate: new Date().toISOString().split('T')[0],
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            client_name: clientObj.name,
+            issue_date: new Date().toISOString().split('T')[0],
+            due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             amount: totalAmount,
             status: 'Draft',
             currency: selectedCurrency,
             items: [...timeInvoiceItems, ...expenseInvoiceItems],
         };
 
-        setInvoices([newInvoice, ...invoices]);
-
-        const billedEntryIds = selectedEntries.map(entry => entry.id);
-        const updatedTimeEntries = timeEntries.map(entry =>
-            billedEntryIds.includes(entry.id) ? { ...entry, isBilled: true } : entry
-        );
-        setTimeEntries(updatedTimeEntries);
-
-        const billedExpenseIds = selectedExpenses.map(exp => exp.id);
-        const updatedExpenses = expenses.map(exp =>
-            billedExpenseIds.includes(exp.id) ? { ...exp, isBilled: true } : exp
-        );
-        setExpenses(updatedExpenses);
+        await addInvoice(newInvoice);
 
         showToast(`Invoice ${newInvoice.id} created!`);
         setIsBillableModalOpen(false);
@@ -100,54 +88,34 @@ const InvoicesView = ({ showToast }) => {
         const clientObj = clients.find(c => c.id === parseInt(selectedClient));
         if (!clientObj) return;
 
-        const clientProjects = projects.filter(p => p.client === clientObj.name && p.currency === selectedCurrency);
+        const clientProjects = projects.filter(p => p.client_id === clientObj.id);
         const clientProjectIds = clientProjects.map(p => p.id);
 
         const unbilledEntries = timeEntries.filter(entry =>
-            clientProjectIds.includes(entry.projectId) && !entry.isBilled
+            clientProjectIds.includes(entry.project_id) && !entry.isBilled
         );
 
         const unbilledExpenses = expenses.filter(expense =>
-            clientProjectIds.includes(expense.projectId) && !expense.isBilled && expense.isBillable
+            clientProjectIds.includes(expense.project_id) && !expense.isBilled && expense.isBillable
         );
 
-        const unbilledEntriesWithRate = unbilledEntries.map(entry => {
-            const project = projectMap[entry.projectId];
-            const rate = project?.billing?.type === 'Hourly' ? project.billing.rate : 0;
-            return {...entry, rate };
-        });
-
-        setItemsToBill({ entries: unbilledEntriesWithRate, expenses: unbilledExpenses });
+        setItemsToBill({ entries: unbilledEntries, expenses: unbilledExpenses });
         setIsBillableModalOpen(true);
         setIsDialogOpen(false);
     };
 
-    const handleStatusChange = (invoiceId, newStatus) => {
-        setInvoices(invoices.map(inv => inv.id === invoiceId ? {...inv, status: newStatus} : inv));
-        setViewingInvoice(prev => prev ? {...prev, status: newStatus} : null);
-        showToast(`Invoice ${invoiceId} marked as ${newStatus}.`);
+    const handleStatusChange = async (invoiceId, newStatus) => {
+        const invoice = invoices.find(inv => inv.id === invoiceId);
+        if (invoice) {
+            await updateInvoice({ ...invoice, status: newStatus });
+            setViewingInvoice(prev => prev ? {...prev, status: newStatus} : null);
+            showToast(`Invoice ${invoiceId} marked as ${newStatus}.`);
+        }
     };
 
-    const handleDeleteInvoice = () => {
+    const handleDeleteInvoice = async () => {
         if (!invoiceToDelete) return;
-
-        const { items } = invoiceToDelete;
-        const timeEntryIdsToUnbill = items.filter(item => item.id.startsWith('time-')).map(item => parseInt(item.id.split('-')[1]));
-        const expenseIdsToUnbill = items.filter(item => item.id.startsWith('exp-')).map(item => parseInt(item.id.split('-')[1]));
-
-        setTimeEntries(timeEntries.map(entry =>
-            timeEntryIdsToUnbill.includes(entry.id)
-                ? { ...entry, isBilled: false }
-                : entry
-        ));
-
-        setExpenses(expenses.map(expense =>
-            expenseIdsToUnbill.includes(expense.id)
-                ? { ...expense, isBilled: false }
-                : expense
-        ));
-
-        setInvoices(invoices.filter(inv => inv.id !== invoiceToDelete.id));
+        await deleteInvoice(invoiceToDelete.id);
         showToast(`Invoice ${invoiceToDelete.id} deleted.`);
         setInvoiceToDelete(null);
         setViewingInvoice(null);
