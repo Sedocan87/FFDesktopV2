@@ -1,0 +1,17 @@
+{
+  "identifier": "com.freelanceflow.dev",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1432",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "FreelanceFlow",
+        "label": "main"
+      }
+    ]
+  }
+}
