@@ -1,29 +1,33 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Client {
-    pub id: i32,
+    pub id: String,
     pub name: String,
     pub email: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
-    pub id: i32,
+    pub id: String,
     pub name: String,
-    pub client_id: i32,
+    pub client_id: String,
     pub rate: Option<f64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TimeEntry {
-    pub id: i32,
-    pub project_id: i32,
+    pub id: String,
+    pub project_id: String,
     pub start_time: String,
     pub end_time: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Invoice {
     pub id: String,
     pub client_name: String,
@@ -34,10 +38,11 @@ pub struct Invoice {
     pub currency: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Expense {
-    pub id: i32,
-    pub project_id: i32,
+    pub id: String,
+    pub project_id: String,
     pub description: String,
     pub amount: f64,
     pub date: String,
@@ -45,7 +50,8 @@ pub struct Expense {
     pub is_billable: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct UserProfile {
     pub company_name: String,
     pub company_email: String,
@@ -53,9 +59,10 @@ pub struct UserProfile {
     pub logo: Option<Vec<u8>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct RecurringInvoice {
-    pub id: i32,
+    pub id: String,
     pub client_name: String,
     pub frequency: String,
     pub next_due_date: String,
@@ -63,14 +70,17 @@ pub struct RecurringInvoice {
     pub currency: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TaxSettings {
     pub rate: f64,
     pub internal_cost_rate: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct CurrencySettings {
-    pub default: String,
+    #[serde(rename = "default")]
+    pub default_currency: String,
     pub invoice_language: String,
 }
