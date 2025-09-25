@@ -311,6 +311,9 @@ const InvoicesView = ({ showToast }) => {
                                             <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{formatCurrency(invoice.amount, invoice.currency)}</td>
                                             <td className="p-4 text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" className="px-2" onClick={() => handleDownloadPdf(invoice)}>
+                                                        <DownloadIcon className="w-4 h-4" />
+                                                    </Button>
                                                     <Button variant="ghost" className="px-2" onClick={() => setViewingInvoice(invoice)}>
                                                         <EyeIcon className="w-4 h-4" />
                                                     </Button>

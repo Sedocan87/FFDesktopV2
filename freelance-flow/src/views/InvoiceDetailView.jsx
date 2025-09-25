@@ -21,9 +21,7 @@ const InvoiceDetailView = ({ invoice, client, onBack, onStatusChange, userProfil
                     </span>
                 </div>
                 <div className="flex gap-2">
-                    {invoice.status === 'Draft' && (
-                        <Button onClick={() => onStatusChange(invoice.id, 'Paid')}>Mark as Paid</Button>
-                    )}
+                   
                 </div>
             </div>
 

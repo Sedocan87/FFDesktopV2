@@ -59,35 +59,39 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                 <Card className="lg:col-span-2">
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Recent Activity</h3>
-                    <ul className="divide-y dark:divide-slate-800">
-                        {recentActivities.slice(0, 5).map((activity, index) => (
-                            <li key={index} className="py-3 flex justify-between items-center">
-                                {activity.type === 'time' && (
-                                    <>
-                                        <div>
-                                            <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours?.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.project_id]}</span></p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">{activity.data.description}</p>
-                                        </div>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>
-                                    </>
-                                )}
-                                 {activity.type === 'invoice' && (
-                                    <>
-                                        <div>
-                                            <p className="font-medium text-slate-800 dark:text-slate-100">Invoice <span className="font-semibold">{activity.data.id}</span> created for <span className="font-semibold">{activity.data.clientName}</span></p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">Amount: {formatCurrency(activity.data.amount, activity.data.currency)}</p>
-                                        </div>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>
-                                    </>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                </Card>
-                <TaxEstimator invoices={invoices} taxSettings={taxSettings} currencySettings={currencySettings} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                <div className="lg:col-span-1">
+                    <TaxEstimator invoices={invoices} taxSettings={taxSettings} currencySettings={currencySettings} />
+                </div>
+                <div className="lg:col-span-2">
+                    <Card>
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Recent Activity</h3>
+                        <ul className="divide-y dark:divide-slate-800">
+                            {recentActivities.slice(0, 5).map((activity, index) => (
+                                <li key={index} className="py-3 flex justify-between items-center">
+                                    {activity.type === 'time' && (
+                                        <>
+                                            <div>
+                                                <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours?.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.project_id]}</span></p>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">{activity.data.description}</p>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>
+                                        </>
+                                    )}
+                                    {activity.type === 'invoice' && (
+                                        <>
+                                            <div>
+                                                <p className="font-medium text-slate-800 dark:text-slate-100">Invoice <span className="font-semibold">{activity.data.id}</span> created for <span className="font-semibold">{activity.data.clientName}</span></p>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">Amount: {formatCurrency(activity.data.amount, activity.data.currency)}</p>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>
+                                        </>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </Card>
+                </div>
             </div>
         </div>
     );
