@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import { formatCurrency } from '../lib/utils';
 
-const ReportingView = ({ projects, timeEntries, expenses, taxSettings }) => {
+const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices }) => {
     const [filter, setFilter] = useState('all'); // 'week', 'month', 'all'
 
     const getFilteredEntries = useCallback(() => {
@@ -12,12 +12,13 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings }) => {
         if (filter === 'all') return timeEntries;
         if (filter === 'month') {
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            return timeEntries.filter(entry => new Date(entry.date) >= startOfMonth);
+            return timeEntries.filter(entry => new Date(entry.startTime) >= startOfMonth);
         }
         if (filter === 'week') {
             const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
-            return timeEntries.filter(entry => new Date(entry.date) >= startOfWeek);
+            startOfWeek.setHours(0, 0, 0, 0);
+            startOfWeek.setDate(startOfWeek.getDate() - now.getDay());
+            return timeEntries.filter(entry => new Date(entry.startTime) >= startOfWeek);
         }
         return [];
     }, [timeEntries, filter]);
@@ -25,31 +26,52 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings }) => {
     const filteredEntries = getFilteredEntries();
 
     const projectMap = projects.reduce((acc, proj) => {
-        acc[proj.id] = { name: proj.name, client: proj.client, billing: proj.billing, currency: proj.currency };
+        acc[proj.id] = { name: proj.name, clientId: proj.clientId, rate: proj.rate };
+        return acc;
+    }, {});
+
+    const clientMap = clients.reduce((acc, client) => {
+        acc[client.id] = client.name;
         return acc;
     }, {});
 
     // Time Analysis Calculations
     const totalHours = filteredEntries.reduce((sum, entry) => sum + entry.hours, 0);
-    const billableAmountsByCurrency = filteredEntries.reduce((acc, entry) => {
-        const project = projectMap[entry.projectId];
-        if (project && project.billing.type === 'Hourly') {
-            const rate = project.billing.rate || 0;
-            const currency = project.currency || 'USD';
-            acc[currency] = (acc[currency] || 0) + (entry.hours * rate);
+    const billableAmountsByCurrency = invoices
+        .filter(i => i.status === 'Paid')
+        .reduce((acc, i) => {
+            acc[i.currency] = (acc[i.currency] || 0) + i.amount;
+            return acc;
+        }, {});
+
+    if (recurringInvoices) {
+        const recurringInvoicesPaid = recurringInvoices
+            .filter(i => i.status === 'Paid')
+            .reduce((acc, i) => {
+                acc[i.currency] = (acc[i.currency] || 0) + i.amount;
+                return acc;
+            }, {});
+
+        for (const currency in recurringInvoicesPaid) {
+            if (billableAmountsByCurrency[currency]) {
+                billableAmountsByCurrency[currency] += recurringInvoicesPaid[currency];
+            } else {
+                billableAmountsByCurrency[currency] = recurringInvoicesPaid[currency];
+            }
         }
-        return acc;
-    }, {});
-    const projectsWorkedOn = [...new Set(filteredEntries.map(entry => entry.projectId))].length;
+    }
+
+    const projectsWorkedOn = [...new Set(filteredEntries.map(entry => entry.project_id))].length;
 
     const hoursByProject = filteredEntries.reduce((acc, entry) => {
-        const projectName = projectMap[entry.projectId]?.name || 'Unknown Project';
+        const projectName = projectMap[entry.project_id]?.name || 'Unknown Project';
         acc[projectName] = (acc[projectName] || 0) + entry.hours;
         return acc;
     }, {});
 
     const hoursByClient = filteredEntries.reduce((acc, entry) => {
-        const clientName = projectMap[entry.projectId]?.client || 'Unknown Client';
+        const project = projectMap[entry.project_id];
+        const clientName = project ? clientMap[project.clientId] : 'Unknown Client';
         acc[clientName] = (acc[clientName] || 0) + entry.hours;
         return acc;
     }, {});
@@ -57,20 +79,20 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings }) => {
     // Profitability Analysis Calculation (always 'All Time')
     const profitabilityData = useMemo(() => {
         return projects.map(project => {
-            const projectTimeEntries = timeEntries.filter(t => t.projectId === project.id);
+            const projectTimeEntries = timeEntries.filter(t => t.project_id === project.id);
             const totalHours = projectTimeEntries.reduce((sum, t) => sum + t.hours, 0);
 
             let revenue = 0;
-            if (project.billing.type === 'Hourly') {
-                revenue = totalHours * (project.billing.rate || 0);
-            } else { // Fixed Price
-                revenue = project.budget || 0;
+            if (project.rate) {
+                revenue = totalHours * project.rate;
+            } else { // Fixed Price - assuming no rate means fixed price, but there is no budget field
+                revenue = 0; // No budget field, so revenue is 0 for now
             }
 
-            const laborCost = totalHours * taxSettings.internalCostRate;
+            const laborCost = totalHours * (taxSettings.internalCostRate || 0);
 
             const expensesCost = expenses
-                .filter(e => e.projectId === project.id && !e.isBillable)
+                .filter(e => e.project_id === project.id && !e.isBillable)
                 .reduce((sum, e) => sum + e.amount, 0);
 
             const totalCost = laborCost + expensesCost;
@@ -78,7 +100,7 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings }) => {
             const profit = revenue - totalCost;
             const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
-            return { id: project.id, name: project.name, currency: project.currency, revenue, cost: totalCost, profit, margin };
+            return { id: project.id, name: project.name, currency: 'USD', revenue, cost: totalCost, profit, margin }; // Assuming USD for now
         });
     }, [projects, timeEntries, expenses, taxSettings.internalCostRate]);
 
@@ -103,7 +125,7 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings }) => {
                     <p className="mt-1 text-3xl font-semibold text-slate-900 dark:text-white">{totalHours.toFixed(2)}</p>
                 </Card>
                  <Card>
-                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">Billable Amount</h3>
+                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Billed Amount</h3>
                     <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
                         {Object.keys(billableAmountsByCurrency).length > 0 ? (
                            Object.entries(billableAmountsByCurrency).map(([currency, amount]) => (

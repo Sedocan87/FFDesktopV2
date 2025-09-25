@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import useStore from '../store';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Dialog from '../components/Dialog';
@@ -7,13 +10,17 @@ import Label from '../components/Label';
 import Select from '../components/Select';
 import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
+import DownloadIcon from '../components/icons/DownloadIcon';
+import CheckIcon from '../components/icons/CheckIcon';
 import { formatCurrency, CURRENCIES } from '../lib/utils';
+import { invoiceTranslations } from '../lib/invoiceTranslations';
 
 const RecurringInvoicesView = ({ showToast }) => {
-    const { clients, recurringInvoices, addRecurringInvoice, updateRecurringInvoice, deleteRecurringInvoice } = useStore();
+    const { clients, recurringInvoices, addRecurringInvoice, updateRecurringInvoice, deleteRecurringInvoice, userProfile, taxSettings, currencySettings } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingRecurring, setEditingRecurring] = useState(null);
     const [recurringToDelete, setRecurringToDelete] = useState(null);
+    const [recurringToMark, setRecurringToMark] = useState(null);
 
     const defaultFormState = {
         clientName: clients.length > 0 ? clients[0].name : '',
@@ -21,6 +28,7 @@ const RecurringInvoicesView = ({ showToast }) => {
         startDate: new Date().toISOString().split('T')[0],
         lineItems: [{ description: '', amount: '' }],
         currency: 'USD',
+        status: 'Active',
     };
 
     const [formState, setFormState] = useState(defaultFormState);
@@ -46,11 +54,12 @@ const RecurringInvoicesView = ({ showToast }) => {
     const openEditDialog = (rec) => {
         setEditingRecurring(rec);
         setFormState({
-            clientName: rec.client_name,
+            clientName: rec.clientName,
             frequency: rec.frequency,
-            startDate: rec.next_due_date,
+            startDate: rec.nextDueDate,
             lineItems: rec.items,
             currency: rec.currency,
+            status: rec.status,
         });
         setIsDialogOpen(true);
     };
@@ -62,11 +71,12 @@ const RecurringInvoicesView = ({ showToast }) => {
         if (editingRecurring) {
             const updatedRecurring = {
                 ...editingRecurring,
-                client_name: formState.clientName,
+                clientName: formState.clientName,
                 frequency: formState.frequency,
-                next_due_date: formState.startDate,
+                nextDueDate: formState.startDate,
                 amount: totalAmount,
                 currency: formState.currency,
+                status: formState.status,
                 items: formState.lineItems.map(item => ({...item, amount: parseFloat(item.amount) || 0 }))
             };
             await updateRecurringInvoice(updatedRecurring);
@@ -74,12 +84,13 @@ const RecurringInvoicesView = ({ showToast }) => {
 
         } else {
             const newRecurring = {
-                id: recurringInvoices.length > 0 ? Math.max(...recurringInvoices.map(i => i.id)) + 1 : 1,
-                client_name: formState.clientName,
+                id: crypto.randomUUID(),
+                clientName: formState.clientName,
                 frequency: formState.frequency,
-                next_due_date: formState.startDate,
+                nextDueDate: formState.startDate,
                 amount: totalAmount,
                 currency: formState.currency,
+                status: 'Active',
                 items: formState.lineItems.map(item => ({...item, amount: parseFloat(item.amount) || 0 }))
             };
             await addRecurringInvoice(newRecurring);
@@ -97,6 +108,118 @@ const RecurringInvoicesView = ({ showToast }) => {
         }
     };
 
+    const handleMarkAsPaid = async (rec) => {
+        const newStatus = rec.status === 'Paid' ? 'Active' : 'Paid';
+        const updatedRecurring = {
+            ...rec,
+            status: newStatus,
+        };
+        await updateRecurringInvoice(updatedRecurring);
+        showToast(`Recurring invoice marked as ${newStatus.toLowerCase()}!`);
+    };
+
+    const handleConfirmMarkAsPaid = () => {
+        if (recurringToMark) {
+            handleMarkAsPaid(recurringToMark);
+            setRecurringToMark(null);
+        }
+    };
+
+    const generatePdf = (invoice, client, userProfile, taxSettings) => {
+        const doc = new jsPDF();
+        // Use the language from the settings prop
+        const lang = currencySettings.invoiceLanguage || 'en';
+        const t = invoiceTranslations[lang];
+        const locale = lang === 'de' ? 'de-DE' : 'en-US';
+
+        const formatLocalizedCurrency = (amount, currency) => {
+            return new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency
+            }).format(amount);
+        };
+
+        const taxRate = taxSettings.rate / 100;
+        const subtotal = invoice.amount;
+        const taxAmount = subtotal * taxRate;
+        const totalAmount = subtotal + taxAmount;
+
+        // Add header
+        if (userProfile.logo) {
+            doc.addImage(userProfile.logo, 'PNG', 14, 10, 40, 20);
+        }
+        doc.setFontSize(20);
+        doc.text(userProfile.companyName, 14, 40);
+        doc.setFontSize(12);
+        doc.text(userProfile.companyAddress, 14, 48);
+        doc.text(userProfile.companyEmail, 14, 56);
+
+        doc.setFontSize(26);
+        doc.text(t.invoice, 200, 20, { align: 'right' });
+        doc.setFontSize(12);
+        doc.text(`Invoice #: ${invoice.id}`, 200, 30, { align: 'right' });
+        doc.text(`${t.issueDate}: ${invoice.nextDueDate}`, 200, 38, { align: 'right' });
+
+        // Add client info
+        doc.setFontSize(14);
+        doc.text(t.billTo, 14, 70);
+        doc.setFontSize(12);
+        doc.text(client.name, 14, 78);
+        doc.text(client.email, 14, 86);
+
+        // Add table
+        const tableColumn = [t.description, t.quantity, t.rate, t.amount];
+        const tableRows = [];
+
+        invoice.items.forEach(item => {
+            const itemData = [
+                item.description,
+                '1',
+                formatLocalizedCurrency(item.amount, invoice.currency),
+                formatLocalizedCurrency(item.amount, invoice.currency),
+            ];
+            tableRows.push(itemData);
+        });
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 100,
+        });
+
+        // Add total
+        let finalY = doc.lastAutoTable.finalY;
+        doc.setFontSize(12);
+        doc.text(`${t.subtotal}`, 150, finalY + 10, { align: 'right' });
+        doc.text(formatLocalizedCurrency(subtotal, invoice.currency), 200, finalY + 10, { align: 'right' });
+
+        doc.text(`${t.tax} (${taxSettings.rate}%):`, 150, finalY + 18, { align: 'right' });
+        doc.text(formatLocalizedCurrency(taxAmount, invoice.currency), 200, finalY + 18, { align: 'right' });
+
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${t.total}`, 150, finalY + 26, { align: 'right' });
+        doc.text(formatLocalizedCurrency(totalAmount, invoice.currency), 200, finalY + 26, { align: 'right' });
+
+
+        // Add footer
+        doc.setFontSize(10);
+        doc.text(t.thankYou, 14, doc.internal.pageSize.height - 10);
+
+        doc.save(`recurring-invoice-${invoice.id}.pdf`);
+        showToast("PDF generated successfully!");
+    };
+
+    const handleDownloadPdf = (rec) => {
+        const client = clients.find(c => c.name === rec.clientName);
+        generatePdf(rec, client, userProfile, taxSettings);
+    };
+
+    const statusColors = {
+        "Paid": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+        "Active": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-4">
@@ -110,6 +233,7 @@ const RecurringInvoicesView = ({ showToast }) => {
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Client</th>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Frequency</th>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Next Due Date</th>
+                            <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Status</th>
                             <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Amount</th>
                              <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Actions</th>
                         </tr>
@@ -120,9 +244,20 @@ const RecurringInvoicesView = ({ showToast }) => {
                                 <td className="p-4 font-medium">{rec.clientName}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{rec.frequency}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{rec.nextDueDate}</td>
+                                <td className="p-4">
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[rec.status]}`}>
+                                        {rec.status}
+                                    </span>
+                                </td>
                                 <td className="p-4 text-right font-mono">{formatCurrency(rec.amount, rec.currency)}</td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">
+                                        <Button variant="ghost" className={`px-2 ${rec.status === 'Paid' ? 'text-green-500' : 'text-slate-400'}`} onClick={() => setRecurringToMark(rec)}>
+                                            <CheckIcon className="w-4 h-4" />
+                                        </Button>
+                                        <Button variant="ghost" className="px-2" onClick={() => handleDownloadPdf(rec)}>
+                                            <DownloadIcon className="w-4 h-4" />
+                                        </Button>
                                         <Button variant="ghost" className="px-2" onClick={() => openEditDialog(rec)}>
                                             <EditIcon className="w-4 h-4" />
                                         </Button>
@@ -193,6 +328,13 @@ const RecurringInvoicesView = ({ showToast }) => {
                 <div className="flex justify-end gap-4 mt-6">
                     <Button variant="secondary" onClick={() => setRecurringToDelete(null)}>Cancel</Button>
                     <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+                </div>
+            </Dialog>
+            <Dialog isOpen={!!recurringToMark} onClose={() => setRecurringToMark(null)} title={`Mark as ${recurringToMark?.status === 'Paid' ? 'Active' : 'Paid'}`}>
+                <p>Are you sure you want to mark this recurring profile as {recurringToMark?.status === 'Paid' ? 'Active' : 'Paid'}?</p>
+                <div className="flex justify-end gap-4 mt-6">
+                    <Button variant="secondary" onClick={() => setRecurringToMark(null)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleConfirmMarkAsPaid}>Yes</Button>
                 </div>
             </Dialog>
         </div>

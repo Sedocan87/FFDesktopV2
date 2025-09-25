@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import useStore from './store';
+import { invoke } from '@tauri-apps/api/core';
 
 // --- UI Components ---
 import Toast from './components/Toast';
@@ -71,35 +72,39 @@ const App = () => {
         }
     }, [isDarkMode]);
     
-    const handleExportData = () => {
-        const dataToExport = {
-            clients,
-            projects,
-            timeEntries,
-            invoices,
-            expenses,
-            userProfile,
-            recurringInvoices,
-            taxSettings,
-            currencySettings,
-        };
-        const jsonString = JSON.stringify(dataToExport, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `freelanceflow_backup_${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        showToast("Data exported successfully!");
+    const handleExportData = async () => {
+        try {
+            const data = await invoke('export_database');
+            const blob = new Blob([new Uint8Array(data)], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `freelanceflow_backup_${new Date().toISOString().split('T')[0]}.db`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast("Database exported successfully!");
+        } catch (error) {
+            console.error('Failed to export database:', error);
+            showToast("Failed to export database.");
+        }
     };
 
-    const handleImport = (importedData) => {
-        setData(importedData);
-        showToast("Data imported successfully! The page will now reload.");
-        setTimeout(() => window.location.reload(), 1500);
+    const handleImport = async (file) => {
+        try {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = new Uint8Array(e.target.result);
+                await invoke('import_database', { data: Array.from(data) });
+                showToast("Database imported successfully! The page will now reload.");
+                setTimeout(() => window.location.reload(), 1500);
+            };
+            reader.readAsArrayBuffer(file);
+        } catch (error) {
+            console.error('Failed to import database:', error);
+            showToast("Failed to import database.");
+        }
     };
 
     const NavLink = ({ view, icon, children }) => (
@@ -147,6 +152,7 @@ const App = () => {
                 clients={clients}
                 timeEntries={timeEntries}
                 invoices={invoices}
+                expenses={expenses}
                 taxSettings={taxSettings}
                 currencySettings={currencySettings}
             />;
@@ -156,7 +162,10 @@ const App = () => {
             case 'timetracking': return <TimeTrackingView showToast={showToast} />;
             case 'reporting': return <ReportingView 
                 projects={projects}
+                clients={clients}
                 timeEntries={timeEntries}
+                invoices={invoices}
+                recurringInvoices={recurringInvoices}
                 expenses={expenses}
                 taxSettings={taxSettings}
             />;
@@ -167,6 +176,7 @@ const App = () => {
                 clients={clients}
                 timeEntries={timeEntries}
                 invoices={invoices}
+                expenses={expenses}
                 taxSettings={taxSettings}
                 currencySettings={currencySettings}
             />;

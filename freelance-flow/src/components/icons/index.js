@@ -13,3 +13,6 @@ export { default as SunIcon } from './SunIcon';
 export { default as TrashIcon } from './TrashIcon';
 export { default as UsersIcon } from './UsersIcon';
 export { default as XIcon } from './XIcon';
+export { default as DownloadIcon } from './DownloadIcon';
+export { default as EyeIcon } from './EyeIcon';
+export { default as CheckIcon } from './CheckIcon';

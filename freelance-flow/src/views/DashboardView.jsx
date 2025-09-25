@@ -3,16 +3,23 @@ import Card from '../components/Card';
 import TaxEstimator from './TaxEstimator';
 import { formatCurrency } from '../lib/utils';
 
-const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices = [], taxSettings = {}, currencySettings = {} }) => {
+const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices = [], expenses = [], taxSettings = {}, currencySettings = {} }) => {
     const projectsWithData = projects.filter(p => p);
     const totalProjects = projectsWithData.length;
     const totalClients = clients.length;
-    const activeProjects = projectsWithData.filter(p => p.status === 'In Progress').length;
-    const totalHoursTracked = projectsWithData.reduce((acc, p) => acc + p.tracked, 0);
     const projectMap = projectsWithData.reduce((acc, proj) => {
         acc[proj.id] = proj.name;
         return acc;
     }, {});
+
+    const currentYear = new Date().getFullYear();
+    const ytdRevenue = invoices
+        .filter(i => i.status === 'Paid' && new Date(i.issueDate).getFullYear() === currentYear)
+        .reduce((acc, i) => acc + i.amount, 0);
+
+    const outstandingInvoices = invoices
+        .filter(i => i.status === 'Draft' || i.status === 'Overdue')
+        .reduce((acc, i) => acc + i.amount, 0);
 
     const recentActivities = [
         ...timeEntries.slice(0, 3).map(t => ({ type: 'time', data: t, date: t.date })),
@@ -28,24 +35,32 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
                 <Card>
                     <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Projects</h3>
-                    <p className="mt-1 text-3xl font-semibold text-slate-900 dark:text-white">{totalProjects}</p>
-                </Card>
-                <Card>
-                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Projects</h3>
-                    <p className="mt-1 text-3xl font-semibold text-slate-900 dark:text-white">{activeProjects}</p>
+                    <div className="flex justify-center">
+                        <p className="mt-1 text-5xl font-bold text-slate-900 dark:text-white">{totalProjects}</p>
+                    </div>
                 </Card>
                  <Card>
                     <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Clients</h3>
-                    <p className="mt-1 text-3xl font-semibold text-slate-900 dark:text-white">{totalClients}</p>
+                    <div className="flex justify-center">
+                        <p className="mt-1 text-5xl font-bold text-slate-900 dark:text-white">{totalClients}</p>
+                    </div>
                 </Card>
                 <Card>
-                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">Hours Tracked</h3>
-                    <p className="mt-1 text-3xl font-semibold text-slate-900 dark:text-white">{totalHoursTracked.toFixed(1)}</p>
+                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">YTD Revenue</h3>
+                    <div className="flex justify-center">
+                        <p className="mt-1 text-5xl font-bold text-slate-900 dark:text-white">{formatCurrency(ytdRevenue, currencySettings.default)}</p>
+                    </div>
+                </Card>
+                <Card>
+                    <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">Outstanding Invoices</h3>
+                    <div className="flex justify-center">
+                        <p className="mt-1 text-5xl font-bold text-slate-900 dark:text-white">{formatCurrency(outstandingInvoices, currencySettings.default)}</p>
+                    </div>
                 </Card>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                 <Card>
+                 <Card className="lg:col-span-2">
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Recent Activity</h3>
                     <ul className="divide-y dark:divide-slate-800">
                         {recentActivities.slice(0, 5).map((activity, index) => (
@@ -53,7 +68,7 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
                                 {activity.type === 'time' && (
                                     <>
                                         <div>
-                                            <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours?.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.projectId]}</span></p>
+                                            <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours?.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.project_id]}</span></p>
                                             <p className="text-sm text-slate-500 dark:text-slate-400">{activity.data.description}</p>
                                         </div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>

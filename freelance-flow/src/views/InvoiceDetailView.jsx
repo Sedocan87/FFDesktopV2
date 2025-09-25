@@ -1,10 +1,9 @@
 import React from 'react';
 import Button from '../components/Button';
 import Card from '../components/Card';
-import TrashIcon from '../components/icons/TrashIcon';
 import { formatCurrency } from '../lib/utils';
 
-const InvoiceDetailView = ({ invoice, client, onBack, onStatusChange, onDownloadPdf, userProfile, onDelete }) => {
+const InvoiceDetailView = ({ invoice, client, onBack, onStatusChange, userProfile }) => {
     const statusColors = {
         "Paid": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         "Draft": "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
@@ -25,13 +24,6 @@ const InvoiceDetailView = ({ invoice, client, onBack, onStatusChange, onDownload
                     {invoice.status === 'Draft' && (
                         <Button onClick={() => onStatusChange(invoice.id, 'Paid')}>Mark as Paid</Button>
                     )}
-                    <Button variant="secondary" onClick={onDownloadPdf}>
-                        Download PDF
-                    </Button>
-                    <Button variant="destructive" onClick={() => onDelete(invoice.id)}>
-                        <TrashIcon className="w-4 h-4 mr-2" />
-                        Delete Invoice
-                    </Button>
                 </div>
             </div>
 

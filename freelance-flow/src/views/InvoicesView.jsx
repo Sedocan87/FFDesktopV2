@@ -12,11 +12,12 @@ import RecurringInvoicesView from './RecurringInvoicesView';
 import BillableItemsModal from './BillableItemsModal';
 import { formatCurrency, CURRENCIES } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
+import { EyeIcon, CheckIcon, TrashIcon, DownloadIcon } from '../components/icons';
 
 const InvoicesView = ({ showToast }) => {
     const {
         projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
-        expenses, userProfile, recurringInvoices,
+        expenses, userProfile, recurringInvoices, setRecurringInvoices,
         currencySettings, taxSettings
     } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -27,6 +28,7 @@ const InvoicesView = ({ showToast }) => {
     const [isBillableModalOpen, setIsBillableModalOpen] = useState(false);
     const [itemsToBill, setItemsToBill] = useState({ entries: [], expenses: [] });
     const [invoiceToDelete, setInvoiceToDelete] = useState(null);
+    const [invoiceToMark, setInvoiceToMark] = useState(null);
 
     const projectMap = useMemo(() => projects.reduce((acc, proj) => {
         acc[proj.id] = proj;
@@ -36,7 +38,7 @@ const InvoicesView = ({ showToast }) => {
     const handleCreateInvoiceFromSelectedItems = async (selectedEntries, selectedExpenses) => {
         if (!selectedClient) return;
 
-        const clientObj = clients.find(c => c.id === parseInt(selectedClient));
+        const clientObj = clients.find(c => c.id === selectedClient);
         if (!clientObj) return;
 
         if (selectedEntries.length === 0 && selectedExpenses.length === 0) {
@@ -50,7 +52,7 @@ const InvoicesView = ({ showToast }) => {
             return {
                 id: `time-${entry.id}`,
                 description: `${project?.name || 'Project'} - Work done on ${new Date(entry.start_time).toLocaleDateString()}`,
-                hours: (new Date(entry.end_time) - new Date(entry.start_time)) / 3600000,
+                hours: entry.hours,
                 rate: rate
             }
         });
@@ -66,10 +68,10 @@ const InvoicesView = ({ showToast }) => {
         const totalAmount = timeAmount + expensesAmount;
 
         const newInvoice = {
-            id: `INV-${String(invoices.length + 1).padStart(3, '0')}`,
-            client_name: clientObj.name,
-            issue_date: new Date().toISOString().split('T')[0],
-            due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            id: `INV-${crypto.randomUUID()}`,
+            clientName: clientObj.name,
+            issueDate: new Date().toISOString().split('T')[0],
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             amount: totalAmount,
             status: 'Draft',
             currency: selectedCurrency,
@@ -85,15 +87,21 @@ const InvoicesView = ({ showToast }) => {
     const handleOpenBillableModal = () => {
         if (!selectedClient) return;
 
-        const clientObj = clients.find(c => c.id === parseInt(selectedClient));
+        const clientObj = clients.find(c => c.id === selectedClient);
         if (!clientObj) return;
 
-        const clientProjects = projects.filter(p => p.client_id === clientObj.id);
+        const clientProjects = projects.filter(p => p.clientId === clientObj.id);
         const clientProjectIds = clientProjects.map(p => p.id);
 
         const unbilledEntries = timeEntries.filter(entry =>
             clientProjectIds.includes(entry.project_id) && !entry.isBilled
-        );
+        ).map(entry => {
+            const project = projectMap[entry.project_id];
+            return {
+                ...entry,
+                rate: project ? project.rate : 0,
+            };
+        });
 
         const unbilledExpenses = expenses.filter(expense =>
             clientProjectIds.includes(expense.project_id) && !expense.isBilled && expense.isBillable
@@ -110,6 +118,14 @@ const InvoicesView = ({ showToast }) => {
             await updateInvoice({ ...invoice, status: newStatus });
             setViewingInvoice(prev => prev ? {...prev, status: newStatus} : null);
             showToast(`Invoice ${invoiceId} marked as ${newStatus}.`);
+        }
+    };
+
+    const handleConfirmMarkAsPaid = () => {
+        if (invoiceToMark) {
+            const newStatus = invoiceToMark.status === 'Paid' ? 'Draft' : 'Paid';
+            handleStatusChange(invoiceToMark.id, newStatus);
+            setInvoiceToMark(null);
         }
     };
 
@@ -208,9 +224,9 @@ const InvoicesView = ({ showToast }) => {
         showToast("PDF generated successfully!");
     };
 
-    const handleDownloadPdf = () => {
-        const client = clients.find(c => c.name === viewingInvoice.clientName);
-        generatePdf(viewingInvoice, client, userProfile, taxSettings);
+    const handleDownloadPdf = (invoice) => {
+        const client = clients.find(c => c.name === invoice.clientName);
+        generatePdf(invoice, client, userProfile, taxSettings);
     };
 
     const statusColors = {
@@ -228,7 +244,6 @@ const InvoicesView = ({ showToast }) => {
                     onBack={() => setViewingInvoice(null)}
                     onStatusChange={handleStatusChange}
                     onDelete={() => setInvoiceToDelete(viewingInvoice)}
-                    onDownloadPdf={handleDownloadPdf}
                     userProfile={userProfile}
                 />
             ) : (
@@ -279,11 +294,12 @@ const InvoicesView = ({ showToast }) => {
                                         <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Issue Date</th>
                                         <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Status</th>
                                         <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Amount</th>
+                                        <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y dark:divide-slate-800">
                                     {invoices.map(invoice => (
-                                        <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => setViewingInvoice(invoice)}>
+                                        <tr key={invoice.id}>
                                             <td className="p-4 font-medium text-slate-800 dark:text-slate-100 font-mono">{invoice.id}</td>
                                             <td className="p-4 text-slate-600 dark:text-slate-400">{invoice.clientName}</td>
                                             <td className="p-4 text-slate-600 dark:text-slate-400">{invoice.issueDate}</td>
@@ -293,6 +309,19 @@ const InvoicesView = ({ showToast }) => {
                                                 </span>
                                             </td>
                                             <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{formatCurrency(invoice.amount, invoice.currency)}</td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" className="px-2" onClick={() => setViewingInvoice(invoice)}>
+                                                        <EyeIcon className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" className={`px-2 ${invoice.status === 'Paid' ? 'text-green-500' : 'text-slate-400'}`} onClick={() => setInvoiceToMark(invoice)}>
+                                                        <CheckIcon className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setInvoiceToDelete(invoice)}>
+                                                        <TrashIcon className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -347,6 +376,14 @@ const InvoicesView = ({ showToast }) => {
                 <div className="flex justify-end gap-4 mt-6">
                     <Button variant="secondary" onClick={() => setInvoiceToDelete(null)}>Cancel</Button>
                     <Button variant="destructive" onClick={handleDeleteInvoice}>Delete</Button>
+                </div>
+            </Dialog>
+
+            <Dialog isOpen={!!invoiceToMark} onClose={() => setInvoiceToMark(null)} title={`Mark Invoice as ${invoiceToMark?.status === 'Paid' ? 'Unpaid' : 'Paid'}`}>
+                <p>Are you sure you want to mark invoice "{invoiceToMark?.id}" as {invoiceToMark?.status === 'Paid' ? 'unpaid' : 'paid'}?</p>
+                <div className="flex justify-end gap-4 mt-6">
+                    <Button variant="secondary" onClick={() => setInvoiceToMark(null)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleConfirmMarkAsPaid}>Yes</Button>
                 </div>
             </Dialog>
         </div>

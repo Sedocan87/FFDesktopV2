@@ -23,7 +23,7 @@ const ExpensesView = ({ showToast }) => {
     const [formIsBillable, setFormIsBillable] = useState(true);
 
     const projectMap = projects.reduce((acc, proj) => {
-        acc[proj.id] = {name: proj.name, currency: proj.currency };
+        acc[proj.id] = {name: proj.name };
         return acc;
     }, {});
 
@@ -43,7 +43,7 @@ const ExpensesView = ({ showToast }) => {
         setFormAmount(expense.amount);
         setFormDate(expense.date);
         setFormDescription(expense.description);
-        setFormIsBillable(expense.is_billable);
+        setFormIsBillable(expense.isBillable);
         setIsDialogOpen(true);
     };
 
@@ -59,23 +59,23 @@ const ExpensesView = ({ showToast }) => {
             if (editingExpense) {
                 const updatedExpense = {
                     ...editingExpense,
-                    project_id: parseInt(formProjectId),
+                    project_id: formProjectId,
                     amount: amountNum,
                     date: formDate,
                     description: formDescription,
-                    is_billable: formIsBillable,
+                    isBillable: formIsBillable,
                 };
                 await updateExpense(updatedExpense);
                 showToast("Expense updated!");
             } else {
                 const newExpense = {
-                    id: expenses.length > 0 ? Math.max(...expenses.map(ex => ex.id)) + 1 : 1,
-                    project_id: parseInt(formProjectId),
+                    id: crypto.randomUUID(),
+                    project_id: formProjectId,
                     amount: amountNum,
                     date: formDate,
                     description: formDescription,
-                    is_billed: false,
-                    is_billable: formIsBillable,
+                    isBilled: false,
+                    isBillable: formIsBillable,
                 };
                 await addExpense(newExpense);
                 showToast("Expense added!");
@@ -117,7 +117,7 @@ const ExpensesView = ({ showToast }) => {
                     <tbody className="divide-y dark:divide-slate-800">
                         {expenses.map(expense => (
                             <tr key={expense.id}>
-                                <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[expense.projectId]?.name || 'N/A'}</td>
+                                <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[expense.project_id]?.name || 'N/A'}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{expense.description}</td>
                                  <td className="p-4 text-slate-600 dark:text-slate-400">
                                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -130,7 +130,7 @@ const ExpensesView = ({ showToast }) => {
                                 </td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{expense.date}</td>
                                 <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">
-                                    {formatCurrency(expense.amount, projectMap[expense.projectId]?.currency || 'USD')}
+                                    {formatCurrency(expense.amount, 'USD')}
                                 </td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">
@@ -153,7 +153,7 @@ const ExpensesView = ({ showToast }) => {
                     <div>
                         <Label htmlFor="expenseProject">Project</Label>
                         <Select id="expenseProject" value={formProjectId} onChange={(e) => setFormProjectId(e.target.value)}>
-                            {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.currency})</option>)}
+                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </Select>
                     </div>
                      <div>

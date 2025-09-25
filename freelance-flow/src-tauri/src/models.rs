@@ -68,6 +68,7 @@ pub struct RecurringInvoice {
     pub next_due_date: String,
     pub amount: f64,
     pub currency: String,
+    pub status: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
