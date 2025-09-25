@@ -10,7 +10,7 @@ import Label from '../components/Label';
 import InvoiceDetailView from './InvoiceDetailView';
 import RecurringInvoicesView from './RecurringInvoicesView';
 import BillableItemsModal from './BillableItemsModal';
-import { formatCurrency, CURRENCIES } from '../lib/utils';
+import { formatCurrency } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
 import { EyeIcon, CheckIcon, TrashIcon, DownloadIcon } from '../components/icons';
 
@@ -22,7 +22,7 @@ const InvoicesView = ({ showToast }) => {
     } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(clients.length > 0 ? clients[0].id : '');
-    const [selectedCurrency, setSelectedCurrency] = useState('USD');
+    const [selectedCurrency] = useState(currencySettings.default || 'USD');
     const [viewingInvoice, setViewingInvoice] = useState(null);
     const [activeTab, setActiveTab] = useState('one-time');
     const [isBillableModalOpen, setIsBillableModalOpen] = useState(false);
@@ -341,21 +341,13 @@ const InvoicesView = ({ showToast }) => {
 
             <Dialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} title="Create New Invoice">
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                         <div>
-                            <Label htmlFor="invoiceClient">Select Client</Label>
-                            <Select id="invoiceClient" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
-                                 {clients.map(client => (
-                                    <option key={client.id} value={client.id}>{client.name}</option>
-                                ))}
-                            </Select>
-                        </div>
-                        <div>
-                            <Label htmlFor="invoiceCurrency">Currency</Label>
-                             <Select id="invoiceCurrency" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)}>
-                                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
-                            </Select>
-                        </div>
+                    <div>
+                        <Label htmlFor="invoiceClient">Select Client</Label>
+                        <Select id="invoiceClient" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
+                            {clients.map(client => (
+                                <option key={client.id} value={client.id}>{client.name}</option>
+                            ))}
+                        </Select>
                     </div>
                     <p className="text-xs text-slate-500 mt-2">This will find all unbilled hours and expenses in the selected currency for this client.</p>
                 </div>
