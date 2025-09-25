@@ -11,6 +11,7 @@ import {
     initialRecurringInvoices,
     initialTaxSettings,
     initialCurrencySettings,
+    initialProfitabilitySettings,
 } from '../lib/initialData';
 
 const getPersistentState = (state) => ({
@@ -23,6 +24,7 @@ const getPersistentState = (state) => ({
     recurringInvoices: state.recurringInvoices,
     taxSettings: state.taxSettings,
     currencySettings: state.currencySettings,
+    profitabilitySettings: state.profitabilitySettings,
 });
 
 const useStore = create((set, get) => ({
@@ -35,6 +37,7 @@ const useStore = create((set, get) => ({
     recurringInvoices: initialRecurringInvoices,
     taxSettings: initialTaxSettings,
     currencySettings: initialCurrencySettings,
+    profitabilitySettings: initialProfitabilitySettings,
     isLoading: true,
     isTimerRunning: false,
     timerStartTime: null,
@@ -50,6 +53,7 @@ const useStore = create((set, get) => ({
     setRecurringInvoices: (newRecurringInvoices) => set(state => ({ recurringInvoices: typeof newRecurringInvoices === 'function' ? newRecurringInvoices(state.recurringInvoices) : newRecurringInvoices })),
     setTaxSettings: (newTaxSettings) => set(state => ({ taxSettings: typeof newTaxSettings === 'function' ? newTaxSettings(state.taxSettings) : newTaxSettings })),
     setCurrencySettings: (newCurrencySettings) => set(state => ({ currencySettings: typeof newCurrencySettings === 'function' ? newCurrencySettings(state.currencySettings) : newCurrencySettings })),
+    setProfitabilitySettings: (newProfitabilitySettings) => set(state => ({ profitabilitySettings: typeof newProfitabilitySettings === 'function' ? newProfitabilitySettings(state.profitabilitySettings) : newProfitabilitySettings })),
     setIsTimerRunning: (isRunning) => set({ isTimerRunning: isRunning }),
     setTimerStartTime: (startTime) => set({ timerStartTime: startTime }),
     setElapsedTime: (time) => set({ elapsedTime: time }),
@@ -105,6 +109,7 @@ const useStore = create((set, get) => ({
     deleteRecurringInvoice: (id) => set((state) => ({ recurringInvoices: state.recurringInvoices.filter((i) => i.id !== id) })),
     updateTaxSettings: (settings) => set({ taxSettings: settings }),
     updateCurrencySettings: (settings) => set({ currencySettings: settings }),
+    updateProfitabilitySettings: (settings) => set({ profitabilitySettings: settings }),
 }));
 
 if (isTauri()) {

@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import { formatCurrency } from '../lib/utils';
 
-const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices }) => {
+const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices, profitabilitySettings }) => {
     const [filter, setFilter] = useState('all'); // 'week', 'month', 'all'
 
     const getFilteredEntries = useCallback(() => {
@@ -89,7 +89,7 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, 
                 revenue = 0; // No budget field, so revenue is 0 for now
             }
 
-            const laborCost = totalHours * (taxSettings.internalCostRate || 0);
+            const laborCost = totalHours * (profitabilitySettings.internalCostRate || 0);
 
             const expensesCost = expenses
                 .filter(e => e.project_id === project.id && !e.isBillable)
@@ -102,7 +102,7 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, 
 
             return { id: project.id, name: project.name, currency: 'USD', revenue, cost: totalCost, profit, margin }; // Assuming USD for now
         });
-    }, [projects, timeEntries, expenses, taxSettings.internalCostRate]);
+    }, [projects, timeEntries, expenses, profitabilitySettings.internalCostRate]);
 
     return (
         <div>
