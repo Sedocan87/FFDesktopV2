@@ -18,7 +18,7 @@ const InvoicesView = ({ showToast }) => {
     const {
         projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
         expenses, userProfile, recurringInvoices, setRecurringInvoices,
-        currencySettings, taxSettings
+        currencySettings, taxSettings, setTimeEntries, setExpenses
     } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(clients.length > 0 ? clients[0].id : '');
@@ -51,7 +51,7 @@ const InvoicesView = ({ showToast }) => {
             const rate = project.rate; // Use the rate from the project
             return {
                 id: `time-${entry.id}`,
-                description: `${project?.name || 'Project'} - Work done on ${new Date(entry.start_time).toLocaleDateString()}`,
+                description: `${project?.name || 'Project'} - Work done on`,
                 hours: entry.hours,
                 rate: rate
             }
@@ -79,6 +79,22 @@ const InvoicesView = ({ showToast }) => {
         };
 
         await addInvoice(newInvoice);
+
+        // Mark entries as billed
+        const billedEntryIds = new Set(selectedEntries.map(e => e.id));
+        setTimeEntries(prevEntries =>
+            prevEntries.map(entry =>
+                billedEntryIds.has(entry.id) ? { ...entry, isBilled: true, invoiceId: newInvoice.id } : entry
+            )
+        );
+
+        // Mark expenses as billed
+        const billedExpenseIds = new Set(selectedExpenses.map(e => e.id));
+        setExpenses(prevExpenses =>
+            prevExpenses.map(expense =>
+                billedExpenseIds.has(expense.id) ? { ...expense, isBilled: true, invoiceId: newInvoice.id } : expense
+            )
+        );
 
         showToast(`Invoice ${newInvoice.id} created!`);
         setIsBillableModalOpen(false);
@@ -131,6 +147,21 @@ const InvoicesView = ({ showToast }) => {
 
     const handleDeleteInvoice = async () => {
         if (!invoiceToDelete) return;
+
+        // Mark associated entries as unbilled
+        setTimeEntries(prevEntries =>
+            prevEntries.map(entry =>
+                entry.invoiceId === invoiceToDelete.id ? { ...entry, isBilled: false, invoiceId: null } : entry
+            )
+        );
+
+        // Mark associated expenses as unbilled
+        setExpenses(prevExpenses =>
+            prevExpenses.map(expense =>
+                expense.invoiceId === invoiceToDelete.id ? { ...expense, isBilled: false, invoiceId: null } : expense
+            )
+        );
+
         await deleteInvoice(invoiceToDelete.id);
         showToast(`Invoice ${invoiceToDelete.id} deleted.`);
         setInvoiceToDelete(null);
