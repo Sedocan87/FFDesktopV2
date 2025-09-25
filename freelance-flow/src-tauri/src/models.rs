@@ -51,10 +51,12 @@ pub struct Expense {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct UserProfile {
+    #[serde(rename = "companyName")]
     pub company_name: String,
+    #[serde(rename = "companyEmail")]
     pub company_email: String,
+    #[serde(rename = "companyAddress")]
     pub company_address: String,
     pub logo: Option<Vec<u8>>,
 }
@@ -83,5 +85,6 @@ pub struct TaxSettings {
 pub struct CurrencySettings {
     #[serde(rename = "default")]
     pub default_currency: String,
+    #[serde(rename = "invoiceLanguage")]
     pub invoice_language: String,
 }
