@@ -7,19 +7,26 @@ const TaxEstimator = ({ invoices, taxSettings, currencySettings }) => {
     const year = today.getFullYear();
     const startOfYear = new Date(year, 0, 1);
 
+    // Calculate YTD revenue from paid invoices for the current year.
     const ytdRevenue = invoices
-        .filter(inv => {
-            const issueDate = new Date(inv.issueDate);
-            return inv.status === 'Paid' && issueDate >= startOfYear && inv.currency === currencySettings.default;
+        .filter(invoice => {
+            const issueDate = new Date(invoice.issueDate);
+            const isPaid = invoice.status === 'Paid';
+            const isCurrentYear = issueDate >= startOfYear;
+            const isDefaultCurrency = invoice.currency === currencySettings.default;
+            return isPaid && isCurrentYear && isDefaultCurrency;
         })
-        .reduce((sum, inv) => sum + inv.amount, 0);
+        .reduce((total, invoice) => total + invoice.amount, 0);
 
+    // Calculate the estimated tax based on the configured tax rate.
     const estimatedTax = ytdRevenue * (taxSettings.rate / 100);
 
     return (
         <Card>
             <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">YTD Tax to be Paid</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{year} (in your default currency: {currencySettings.default})</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+                {year} (in your default currency: {currencySettings.default})
+            </p>
             <div className="mt-4">
                 <div className="flex justify-between items-baseline">
                     <span className="text-slate-600 dark:text-slate-300">YTD Revenue:</span>
