@@ -53,7 +53,7 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
                                 {activity.type === 'time' && (
                                     <>
                                         <div>
-                                            <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.projectId]}</span></p>
+                                            <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours?.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.projectId]}</span></p>
                                             <p className="text-sm text-slate-500 dark:text-slate-400">{activity.data.description}</p>
                                         </div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>

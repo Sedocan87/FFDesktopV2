@@ -27,10 +27,7 @@ const ProjectsView = ({ showToast }) => {
     }, {}), [clients]);
 
     const projectHours = useMemo(() => timeEntries.reduce((acc, entry) => {
-        if (entry.end_time) {
-            const hours = (new Date(entry.end_time) - new Date(entry.start_time)) / 3600000;
-            acc[entry.project_id] = (acc[entry.project_id] || 0) + hours;
-        }
+        acc[entry.project_id] = (acc[entry.project_id] || 0) + entry.hours;
         return acc;
     }, {}), [timeEntries]);
 
@@ -48,7 +45,7 @@ const ProjectsView = ({ showToast }) => {
         setEditingProject(project);
         setFormState({
             name: project.name,
-            clientId: project.client_id,
+            clientId: project.clientId,
             rate: project.rate || 100,
         });
         setIsDialogOpen(true);
@@ -68,10 +65,10 @@ const ProjectsView = ({ showToast }) => {
         e.preventDefault();
         if (formState.name.trim() && formState.clientId) {
             if (editingProject) {
-                await updateProject(editingProject.id, formState.name, parseInt(formState.clientId), parseFloat(formState.rate));
+                await updateProject(editingProject.id, formState.name, formState.clientId, parseFloat(formState.rate));
                 showToast("Project updated successfully!");
             } else {
-                await addProject(formState.name, parseInt(formState.clientId), parseFloat(formState.rate));
+                await addProject(formState.name, formState.clientId, parseFloat(formState.rate));
                 showToast("Project created successfully!");
             }
             closeDialog();
@@ -112,7 +109,7 @@ const ProjectsView = ({ showToast }) => {
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-300">
                                     {project.name}
                                 </td>
-                                <td className="p-4 text-slate-600 dark:text-slate-400">{clientMap[project.client_id]}</td>
+                                <td className="p-4 text-slate-600 dark:text-slate-400">{clientMap[project.clientId]}</td>
                                 <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{(projectHours[project.id] || 0).toFixed(2)}</td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">

@@ -128,7 +128,7 @@ const App = () => {
         }, {});
 
         return projects.reduce((acc, project) => {
-            const clientName = clientNameMap[project.client_id];
+            const clientName = clientNameMap[project.clientId];
             if (clientName) {
                 acc[clientName] = (acc[clientName] || 0) + 1;
             }

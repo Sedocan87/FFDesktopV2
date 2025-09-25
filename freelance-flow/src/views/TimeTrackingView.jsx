@@ -24,7 +24,7 @@ const TimeTrackingView = ({ showToast }) => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState(null);
     const [editFormState, setEditFormState] = useState({
-        projectId: '',
+        project_id: '',
         hours: '',
         date: '',
         description: '',
@@ -33,10 +33,10 @@ const TimeTrackingView = ({ showToast }) => {
     const openEditDialog = (entry) => {
         setEditingEntry(entry);
         setEditFormState({
-            projectId: entry.project_id,
-            hours: calculateHours(entry.start_time, entry.end_time),
-            date: new Date(entry.start_time).toISOString().split('T')[0],
-            description: '', // Description is not stored in the new model
+            project_id: entry.project_id,
+            hours: entry.hours,
+            date: new Date(entry.startTime).toISOString().split('T')[0],
+            description: entry.description || '',
         });
         setIsEditDialogOpen(true);
     };
@@ -50,15 +50,22 @@ const TimeTrackingView = ({ showToast }) => {
         e.preventDefault();
         if (!editingEntry) return;
 
+        const hoursNum = parseFloat(editFormState.hours);
+        if (isNaN(hoursNum) || hoursNum <= 0) {
+            showToast("Invalid hours.");
+            return;
+        }
+
         const startDate = new Date(editFormState.date);
         const startTime = startDate.toISOString();
-        const endTime = new Date(startDate.getTime() + editFormState.hours * 3600000).toISOString();
+        const endTime = new Date(startDate.getTime() + hoursNum * 3600000).toISOString();
 
         await updateTimeEntry(
             editingEntry.id,
-            parseInt(editFormState.projectId),
+            editFormState.project_id,
             startTime,
-            endTime
+            endTime,
+            hoursNum
         );
 
         showToast("Time entry updated successfully!");
@@ -86,7 +93,8 @@ const TimeTrackingView = ({ showToast }) => {
         setIsTimerRunning(false);
         const startTime = new Date(timerStartTime).toISOString();
         const endTime = new Date().toISOString();
-        await addTimeEntry(parseInt(timerProjectId), startTime, endTime);
+        const hours = elapsedTime / 3600;
+        await addTimeEntry(timerProjectId, startTime, endTime, hours);
 
         setTimerStartTime(null);
         setElapsedTime(0);
@@ -104,7 +112,7 @@ const TimeTrackingView = ({ showToast }) => {
         const startTime = startDate.toISOString();
         const endTime = new Date(startDate.getTime() + hoursNum * 3600000).toISOString();
 
-        await addTimeEntry(parseInt(selectedProject), startTime, endTime);
+        await addTimeEntry(selectedProject, startTime, endTime, hoursNum);
         setHours('');
         setDescription('');
         showToast("Time entry logged successfully!");
@@ -115,19 +123,14 @@ const TimeTrackingView = ({ showToast }) => {
         return acc;
     }, {}), [projects]);
 
+    const timerProjectName = timerProjectId ? (projectMap[timerProjectId] || '') : '';
+
     const formatTime = (totalSeconds) => {
         const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
         const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
         const seconds = (totalSeconds % 60).toString().padStart(2, '0');
         return `${hours}:${minutes}:${seconds}`;
     };
-
-    const calculateHours = (start, end) => {
-        if (!end) return 0;
-        return (new Date(end) - new Date(start)) / 3600000;
-    };
-
-    const timerProjectName = timerProjectId ? projectMap[timerProjectId] : 'No project selected';
 
     return (
         <div>
@@ -199,8 +202,8 @@ const TimeTrackingView = ({ showToast }) => {
                                 {timeEntries.map(entry => (
                                     <tr key={entry.id}>
                                         <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.project_id]}</td>
-                                        <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{calculateHours(entry.start_time, entry.end_time).toFixed(2)}</td>
-                                        <td className="p-4 text-slate-600 dark:text-slate-400">{new Date(entry.start_time).toLocaleDateString()}</td>
+                                        <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{entry.hours.toFixed(2)}</td>
+                                        <td className="p-4 text-slate-600 dark:text-slate-400">{new Date(entry.startTime).toLocaleDateString()}</td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="ghost" className="px-2" onClick={() => openEditDialog(entry)}>
@@ -223,7 +226,7 @@ const TimeTrackingView = ({ showToast }) => {
                 <form onSubmit={handleUpdateEntry} className="space-y-4">
                     <div>
                         <Label htmlFor="editProject">Project</Label>
-                        <Select id="editProject" value={editFormState.projectId} onChange={e => setEditFormState({...editFormState, projectId: e.target.value})}>
+                        <Select id="editProject" value={editFormState.project_id} onChange={e => setEditFormState({...editFormState, project_id: e.target.value})}>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </Select>
                     </div>
