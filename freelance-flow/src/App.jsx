@@ -28,7 +28,7 @@ const App = () => {
 
     const {
         clients, projects, timeEntries, invoices, expenses, userProfile,
-        recurringInvoices, taxSettings, currencySettings,
+        recurringInvoices, taxSettings, currencySettings, profitabilitySettings,
         isLoading, isTimerRunning, timerStartTime, elapsedTime, timerProjectId,
         setData, setClients, setProjects, setTimeEntries, setInvoices, setExpenses,
         setUserProfile, setRecurringInvoices, setTaxSettings, setCurrencySettings,
@@ -168,6 +168,7 @@ const App = () => {
                 recurringInvoices={recurringInvoices}
                 expenses={expenses}
                 taxSettings={taxSettings}
+                profitabilitySettings={profitabilitySettings}
             />;
             case 'expenses': return <ExpensesView showToast={showToast} />;
             case 'settings': return <SettingsView showToast={showToast} onImport={handleImport} onExport={handleExportData} />;

@@ -25,8 +25,11 @@ export const initialRecurringInvoices = [];
 
 export const initialTaxSettings = {
     rate: 25,
-    internalCostRate: 50, // Default internal cost per hour for profitability
 };
+
+export const initialProfitabilitySettings = {
+    internalCostRate: 50, // Default internal cost per hour for profitability
+}
 
 export const initialCurrencySettings = {
     default: 'USD',

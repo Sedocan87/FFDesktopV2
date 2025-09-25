@@ -10,16 +10,18 @@ import { CURRENCIES } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
 
 const SettingsView = ({ showToast, onImport, onExport }) => {
-    const { userProfile, currencySettings, setUserProfile, setCurrencySettings } = useStore();
+    const { userProfile, currencySettings, profitabilitySettings, setUserProfile, setCurrencySettings, setProfitabilitySettings } = useStore();
     const fileInputRef = useRef(null);
 
     const [profile, setProfile] = useState(userProfile);
     const [settings, setSettings] = useState(currencySettings);
+    const [profitability, setProfitability] = useState(profitabilitySettings);
 
     useEffect(() => {
         setProfile(userProfile);
         setSettings(currencySettings);
-    }, [userProfile, currencySettings]);
+        setProfitability(profitabilitySettings);
+    }, [userProfile, currencySettings, profitabilitySettings]);
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
@@ -29,6 +31,11 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
     const handleSettingsChange = (e) => {
         const { name, value } = e.target;
         setSettings(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleProfitabilityChange = (e) => {
+        const { name, value } = e.target;
+        setProfitability(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
     };
 
     const handleLogoChange = (e) => {
@@ -45,6 +52,7 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
     const handleSave = () => {
         setUserProfile(profile);
         setCurrencySettings(settings);
+        setProfitabilitySettings(profitability);
         showToast('Settings saved successfully!');
     };
     
@@ -112,6 +120,23 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
                                         </option>
                                     )}
                                 </Select>
+                            </div>
+                        </div>
+                    </Card>
+                    <Card>
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Profitability</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="internalCostRate">Internal Hourly Cost</Label>
+                                <Input
+                                    id="internalCostRate"
+                                    name="internalCostRate"
+                                    type="number"
+                                    value={profitability.internalCostRate}
+                                    onChange={handleProfitabilityChange}
+                                    placeholder="e.g., 50"
+                                />
+                                <p className="text-sm text-slate-500 mt-1">Set your internal cost per hour for accurate project profitability tracking.</p>
                             </div>
                         </div>
                     </Card>
