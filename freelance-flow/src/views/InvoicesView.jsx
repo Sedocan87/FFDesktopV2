@@ -17,19 +17,12 @@ import { EyeIcon, CheckIcon, TrashIcon, DownloadIcon } from '../components/icons
 const InvoicesView = ({ showToast }) => {
     const { projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
         expenses, userProfile, recurringInvoices, setRecurringInvoices,
-        currencySettings, taxSettings, setTimeEntries, setExpenses
+        currencySettings, taxSettings, setTimeEntries, setExpenses, setIsNewInvoiceDialogOpen
     } = useStore();
-    const [viewingInvoice, setViewingInvoice] = useState(null);
+const [viewingInvoice, setViewingInvoice] = useState(null);
     const [invoiceToMark, setInvoiceToMark] = useState(null);
     const [invoiceToDelete, setInvoiceToDelete] = useState(null);
     const [activeTab, setActiveTab] = useState('one-time');
-
-    
-
-    const projectMap = useMemo(() => projects.reduce((acc, proj) => {
-        acc[proj.id] = proj;
-        return acc;
-    }, {}), [projects]);
 
     const handleStatusChange = async (invoiceId, newStatus) => {
         const invoice = invoices.find(inv => inv.id === invoiceId);
@@ -69,106 +62,6 @@ const InvoicesView = ({ showToast }) => {
         showToast(`Invoice ${invoiceToDelete.id} deleted.`);
         setInvoiceToDelete(null);
         setViewingInvoice(null);
-    }
-
-    const generatePdf = (invoice, client, userProfile, taxSettings) => {
-        const doc = new jsPDF();
-        // Use the language from the settings prop
-        const lang = currencySettings.invoiceLanguage || 'en';
-        const t = invoiceTranslations[lang];
-        const locale = lang === 'de' ? 'de-DE' : 'en-US';
-
-        const formatLocalizedCurrency = (amount, currency) => {
-            return new Intl.NumberFormat(locale, {
-                style: 'currency',
-                currency: currency
-            }).format(amount);
-        };
-
-        const taxRate = taxSettings.rate / 100;
-        let subtotal, taxAmount, totalAmount;
-
-        if (taxSettings.inclusive) {
-            totalAmount = invoice.amount;
-            subtotal = totalAmount / (1 + taxRate);
-            taxAmount = totalAmount - subtotal;
-        } else {
-            subtotal = invoice.amount;
-            taxAmount = subtotal * taxRate;
-            totalAmount = subtotal + taxAmount;
-        }
-
-        // Add header
-        if (userProfile.logo) {
-            doc.addImage(userProfile.logo, 'PNG', 14, 10, 40, 20);
-        }
-        doc.setFontSize(20);
-        doc.text(userProfile.companyName, 14, 40);
-        doc.setFontSize(12);
-        doc.text(userProfile.companyAddress, 14, 48);
-        doc.text(userProfile.companyEmail, 14, 56);
-
-        doc.setFontSize(26);
-        doc.text(t.invoice, 200, 20, { align: 'right' });
-        doc.setFontSize(12);
-        doc.text(`Invoice #: ${invoice.id}`, 200, 30, { align: 'right' });
-        doc.text(`${t.issueDate}: ${invoice.issueDate}`, 200, 38, { align: 'right' });
-        doc.text(`${t.dueDate}: ${invoice.dueDate}`, 200, 46, { align: 'right' });
-
-
-        // Add client info
-        doc.setFontSize(14);
-        doc.text(t.billTo, 14, 70);
-        doc.setFontSize(12);
-        doc.text(client.name, 14, 78);
-        doc.text(client.email, 14, 86);
-
-        // Add table
-        const tableColumn = [t.description, t.quantity, t.rate, t.amount];
-        const tableRows = [];
-
-        invoice.items.forEach(item => {
-            const itemData = [
-                item.description,
-                item.hours ? item.hours.toFixed(2) : '1',
-                item.hours ? formatLocalizedCurrency(item.rate, invoice.currency) : formatLocalizedCurrency(item.amount, invoice.currency),
-                item.hours ? formatLocalizedCurrency(item.hours * item.rate, invoice.currency) : formatLocalizedCurrency(item.amount, invoice.currency),
-            ];
-            tableRows.push(itemData);
-        });
-
-        autoTable(doc, {
-            head: [tableColumn],
-            body: tableRows,
-            startY: 100,
-        });
-
-        // Add total
-        let finalY = doc.lastAutoTable.finalY;
-        doc.setFontSize(12);
-        doc.text(`${t.subtotal}`, 150, finalY + 10, { align: 'right' });
-        doc.text(formatLocalizedCurrency(subtotal, invoice.currency), 200, finalY + 10, { align: 'right' });
-
-        doc.text(`${t.tax} (${taxSettings.rate}%):`, 150, finalY + 18, { align: 'right' });
-        doc.text(formatLocalizedCurrency(taxAmount, invoice.currency), 200, finalY + 18, { align: 'right' });
-
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text(`${t.total}`, 150, finalY + 26, { align: 'right' });
-        doc.text(formatLocalizedCurrency(totalAmount, invoice.currency), 200, finalY + 26, { align: 'right' });
-
-
-        // Add footer
-        doc.setFontSize(10);
-        doc.text(t.thankYou, 14, doc.internal.pageSize.height - 10);
-
-        doc.save(`invoice-${invoice.id}.pdf`);
-        showToast("PDF generated successfully!");
-    };
-
-    const handleDownloadPdf = (invoice) => {
-        const client = clients.find(c => c.name === invoice.clientName);
-        generatePdf(invoice, client, userProfile, taxSettings);
     };
 
     const statusColors = {
@@ -196,6 +89,7 @@ const InvoicesView = ({ showToast }) => {
                             <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Invoices</h1>
                             <p className="mt-1 text-slate-600 dark:text-slate-400">Create and manage your client invoices.</p>
                         </div>
+                        <Button onClick={() => setIsNewInvoiceDialogOpen(true)}>Create New Invoice</Button>
                     </div>
 
                     <div className="border-b dark:border-slate-800 mb-6">
