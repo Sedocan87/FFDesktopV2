@@ -139,8 +139,8 @@ const useStore = create((set, get) => ({
         return {
             clients: state.clients.filter((c) => c.id !== id),
             projects: state.projects.filter((p) => p.clientId !== id),
-            invoices: state.invoices.filter((i) => !projectIdsToDelete.includes(i.projectId)),
-            timeEntries: state.timeEntries.filter((t) => !projectIdsToDelete.includes(t.project_id)),
+            invoices: state.invoices.filter((i) => i.projectIds && !i.projectIds.some(pid => projectIdsToDelete.includes(pid))),
+            timeEntries: state.timeEntries.filter((t) => !projectIdsToDelete.includes(t.projectId)),
             expenses: state.expenses.filter((e) => !projectIdsToDelete.includes(e.projectId)),
         };
     }),
@@ -148,12 +148,12 @@ const useStore = create((set, get) => ({
     updateProject: (id, name, clientId, rate) => set((state) => ({ projects: state.projects.map((p) => (p.id === id ? { ...p, name, clientId, rate } : p)) })),
     deleteProject: (id) => set((state) => ({
         projects: state.projects.filter((p) => p.id !== id),
-        invoices: state.invoices.filter((i) => i.projectId !== id),
-        timeEntries: state.timeEntries.filter((t) => t.project_id !== id),
+        invoices: state.invoices.filter((i) => i.projectIds && !i.projectIds.includes(id)),
+        timeEntries: state.timeEntries.filter((t) => t.projectId !== id),
         expenses: state.expenses.filter((e) => e.projectId !== id),
     })),
-    addTimeEntry: (project_id, startTime, endTime, hours) => set((state) => ({ timeEntries: [...state.timeEntries, { id: crypto.randomUUID(), project_id, startTime, endTime, hours, isArchived: false }] })),
-    updateTimeEntry: (id, project_id, startTime, endTime, hours) => set((state) => ({ timeEntries: state.timeEntries.map((t) => (t.id === id ? { ...t, project_id, startTime, endTime, hours } : t)) })),
+    addTimeEntry: (projectId, startTime, endTime, hours) => set((state) => ({ timeEntries: [...state.timeEntries, { id: crypto.randomUUID(), projectId, startTime, endTime, hours, isArchived: false }] })),
+    updateTimeEntry: (id, projectId, startTime, endTime, hours) => set((state) => ({ timeEntries: state.timeEntries.map((t) => (t.id === id ? { ...t, projectId, startTime, endTime, hours } : t)) })),
     deleteTimeEntry: (id) => set((state) => ({ timeEntries: state.timeEntries.filter((t) => t.id !== id) })),
     addInvoice: (invoice) => set((state) => ({ invoices: [...state.invoices, { ...invoice, id: invoice.id || crypto.randomUUID(), isArchived: false }] })),
     updateInvoice: (invoice) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === invoice.id ? invoice : i)) })),
@@ -169,8 +169,8 @@ const useStore = create((set, get) => ({
         return {
             clients: state.clients.map((c) => (c.id === id ? { ...c, isArchived: true } : c)),
             projects: state.projects.map((p) => (p.clientId === id ? { ...p, isArchived: true } : p)),
-            invoices: state.invoices.map((i) => (projectIdsToArchive.includes(i.projectId) ? { ...i, isArchived: true } : i)),
-            timeEntries: state.timeEntries.map((t) => (projectIdsToArchive.includes(t.project_id) ? { ...t, isArchived: true } : t)),
+            invoices: state.invoices.map((i) => (i.projectIds && i.projectIds.some(pid => projectIdsToArchive.includes(pid)) ? { ...i, isArchived: true } : i)),
+            timeEntries: state.timeEntries.map((t) => (projectIdsToArchive.includes(t.projectId) ? { ...t, isArchived: true } : t)),
             expenses: state.expenses.map((e) => (projectIdsToArchive.includes(e.projectId) ? { ...e, isArchived: true } : e)),
         };
     }),
@@ -181,22 +181,22 @@ const useStore = create((set, get) => ({
         return {
             clients: state.clients.map((c) => (c.id === id ? { ...c, isArchived: false } : c)),
             projects: state.projects.map((p) => (p.clientId === id ? { ...p, isArchived: false } : p)),
-            invoices: state.invoices.map((i) => (projectIdsToUnarchive.includes(i.projectId) ? { ...i, isArchived: false } : i)),
-            timeEntries: state.timeEntries.map((t) => (projectIdsToUnarchive.includes(t.project_id) ? { ...t, isArchived: false } : t)),
+            invoices: state.invoices.map((i) => (i.projectIds && i.projectIds.some(pid => projectIdsToUnarchive.includes(pid)) ? { ...i, isArchived: false } : i)),
+            timeEntries: state.timeEntries.map((t) => (projectIdsToUnarchive.includes(t.projectId) ? { ...t, isArchived: false } : t)),
             expenses: state.expenses.map((e) => (projectIdsToUnarchive.includes(e.projectId) ? { ...e, isArchived: false } : e)),
         };
     }),
 
     archiveProject: (id) => set((state) => ({
         projects: state.projects.map((p) => (p.id === id ? { ...p, isArchived: true } : p)),
-        invoices: state.invoices.map((i) => (i.projectId === id ? { ...i, isArchived: true } : i)),
-        timeEntries: state.timeEntries.map((t) => (t.project_id === id ? { ...t, isArchived: true } : t)),
+        invoices: state.invoices.map((i) => (i.projectIds && i.projectIds.includes(id) ? { ...i, isArchived: true } : i)),
+        timeEntries: state.timeEntries.map((t) => (t.projectId === id ? { ...t, isArchived: true } : t)),
         expenses: state.expenses.map((e) => (e.projectId === id ? { ...e, isArchived: true } : e)),
     })),
     unarchiveProject: (id) => set((state) => ({
         projects: state.projects.map((p) => (p.id === id ? { ...p, isArchived: false } : p)),
-        invoices: state.invoices.map((i) => (i.projectId === id ? { ...i, isArchived: false } : i)),
-        timeEntries: state.timeEntries.map((t) => (t.project_id === id ? { ...t, isArchived: false } : t)),
+        invoices: state.invoices.map((i) => (i.projectIds && i.projectIds.includes(id) ? { ...i, isArchived: false } : i)),
+        timeEntries: state.timeEntries.map((t) => (t.projectId === id ? { ...t, isArchived: false } : t)),
         expenses: state.expenses.map((e) => (e.projectId === id ? { ...e, isArchived: false } : e)),
     })),
 
