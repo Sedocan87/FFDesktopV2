@@ -163,6 +163,9 @@ const useStore = create((set, get) => ({
     deleteExpense: (id) => set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
 
     archiveClient: (id) => set((state) => {
+        const clientToArchive = state.clients.find((c) => c.id === id);
+        if (!clientToArchive) return {};
+
         const projectsToArchive = state.projects.filter((p) => p.clientId === id);
         const projectIdsToArchive = projectsToArchive.map((p) => p.id);
 
@@ -172,9 +175,13 @@ const useStore = create((set, get) => ({
             invoices: state.invoices.map((i) => (i.projectIds && i.projectIds.some(pid => projectIdsToArchive.includes(pid)) ? { ...i, isArchived: true } : i)),
             timeEntries: state.timeEntries.map((t) => (projectIdsToArchive.includes(t.projectId) ? { ...t, isArchived: true } : t)),
             expenses: state.expenses.map((e) => (projectIdsToArchive.includes(e.projectId) ? { ...e, isArchived: true } : e)),
+            recurringInvoices: state.recurringInvoices.map((ri) => (ri.clientName === clientToArchive.name ? { ...ri, isArchived: true } : ri)),
         };
     }),
     unarchiveClient: (id) => set((state) => {
+        const clientToUnarchive = state.clients.find((c) => c.id === id);
+        if (!clientToUnarchive) return {};
+
         const projectsToUnarchive = state.projects.filter((p) => p.clientId === id);
         const projectIdsToUnarchive = projectsToUnarchive.map((p) => p.id);
 
@@ -184,6 +191,7 @@ const useStore = create((set, get) => ({
             invoices: state.invoices.map((i) => (i.projectIds && i.projectIds.some(pid => projectIdsToUnarchive.includes(pid)) ? { ...i, isArchived: false } : i)),
             timeEntries: state.timeEntries.map((t) => (projectIdsToUnarchive.includes(t.projectId) ? { ...t, isArchived: false } : t)),
             expenses: state.expenses.map((e) => (projectIdsToUnarchive.includes(e.projectId) ? { ...e, isArchived: false } : e)),
+            recurringInvoices: state.recurringInvoices.map((ri) => (ri.clientName === clientToUnarchive.name ? { ...ri, isArchived: false } : ri)),
         };
     }),
 
@@ -208,6 +216,9 @@ const useStore = create((set, get) => ({
 
     archiveExpense: (id) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, isArchived: true } : e)) })),
     unarchiveExpense: (id) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, isArchived: false } : e)) })),
+
+    archiveRecurringInvoice: (id) => set((state) => ({ recurringInvoices: state.recurringInvoices.map((i) => (i.id === id ? { ...i, isArchived: true } : i)) })),
+    unarchiveRecurringInvoice: (id) => set((state) => ({ recurringInvoices: state.recurringInvoices.map((i) => (i.id === id ? { ...i, isArchived: false } : i)) })),
 
     updateUserProfile: (profile) => set({ userProfile: profile }),
     addRecurringInvoice: (invoice) => set((state) => ({ recurringInvoices: [...state.recurringInvoices, { ...invoice, id: invoice.id || crypto.randomUUID() }] })),
