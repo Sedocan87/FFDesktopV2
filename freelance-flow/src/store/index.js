@@ -77,15 +77,13 @@ const useStore = create((set, get) => ({
         const today = new Date();
 
         recurringInvoices.forEach(rec => {
-            if (rec.status !== 'Active') return;
-
             let currentDate = new Date(rec.nextDueDate);
             while (currentDate <= today) {
                 generatedInvoices.push({
                     ...rec,
                     id: `${rec.id}-${currentDate.toISOString().split('T')[0]}`,
                     issueDate: currentDate.toISOString().split('T')[0],
-                    status: 'Draft',
+                    status: rec.status === 'Paid' ? 'Paid' : 'Draft',
                 });
 
                 if (rec.frequency === 'Monthly') {
