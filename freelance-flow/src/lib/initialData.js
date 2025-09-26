@@ -25,6 +25,7 @@ export const initialRecurringInvoices = [];
 
 export const initialTaxSettings = {
     rate: 25,
+    inclusive: false,
 };
 
 export const initialProfitabilitySettings = {

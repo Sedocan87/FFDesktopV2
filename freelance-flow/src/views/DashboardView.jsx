@@ -15,11 +15,29 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
     const currentYear = new Date().getFullYear();
     const ytdRevenue = invoices
         .filter(i => i.status === 'Paid' && new Date(i.issueDate).getFullYear() === currentYear)
-        .reduce((acc, i) => acc + i.amount, 0);
+        .reduce((acc, i) => {
+            const taxRate = taxSettings.rate / 100;
+            let totalAmount;
+            if (taxSettings.inclusive) {
+                totalAmount = i.amount;
+            } else {
+                totalAmount = i.amount * (1 + taxRate);
+            }
+            return acc + totalAmount;
+        }, 0);
 
     const outstandingInvoices = invoices
         .filter(i => i.status === 'Draft' || i.status === 'Overdue')
-        .reduce((acc, i) => acc + i.amount, 0);
+        .reduce((acc, i) => {
+            const taxRate = taxSettings.rate / 100;
+            let totalAmount;
+            if (taxSettings.inclusive) {
+                totalAmount = i.amount;
+            } else {
+                totalAmount = i.amount * (1 + taxRate);
+            }
+            return acc + totalAmount;
+        }, 0);
 
     const recentActivities = [
         ...timeEntries.slice(0, 3).map(t => ({ type: 'time', data: t, date: t.date })),

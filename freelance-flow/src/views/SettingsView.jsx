@@ -10,18 +10,20 @@ import { CURRENCIES } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
 
 const SettingsView = ({ showToast, onImport, onExport }) => {
-    const { userProfile, currencySettings, profitabilitySettings, setUserProfile, setCurrencySettings, setProfitabilitySettings } = useStore();
+    const { userProfile, currencySettings, profitabilitySettings, taxSettings, setUserProfile, setCurrencySettings, setProfitabilitySettings, setTaxSettings } = useStore();
     const fileInputRef = useRef(null);
 
     const [profile, setProfile] = useState(userProfile);
     const [settings, setSettings] = useState(currencySettings);
     const [profitability, setProfitability] = useState(profitabilitySettings);
+    const [tax, setTax] = useState(taxSettings);
 
     useEffect(() => {
         setProfile(userProfile);
         setSettings(currencySettings);
         setProfitability(profitabilitySettings);
-    }, [userProfile, currencySettings, profitabilitySettings]);
+        setTax(taxSettings);
+    }, [userProfile, currencySettings, profitabilitySettings, taxSettings]);
 
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
@@ -35,7 +37,12 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
 
     const handleProfitabilityChange = (e) => {
         const { name, value } = e.target;
-        setProfitability(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+        setProfitability(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleTaxChange = (e) => {
+        const { name, value } = e.target;
+        setTax(prev => ({ ...prev, [name]: value }));
     };
 
     const handleLogoChange = (e) => {
@@ -52,7 +59,8 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
     const handleSave = () => {
         setUserProfile(profile);
         setCurrencySettings(settings);
-        setProfitabilitySettings(profitability);
+        setProfitabilitySettings({ ...profitability, internalCostRate: parseFloat(profitability.internalCostRate) || 0 });
+        setTaxSettings(tax);
         showToast('Settings saved successfully!');
     };
     
@@ -73,35 +81,85 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
             <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your application settings.</p>
 
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Card>
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Company Profile</h3>
-                    <div className="space-y-4">
-                        <div>
-                            <Label htmlFor="companyName">Company Name</Label>
-                            <Input id="companyName" name="companyName" value={profile.companyName} onChange={handleProfileChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="companyEmail">Company Email</Label>
-                            <Input id="companyEmail" name="companyEmail" type="email" value={profile.companyEmail} onChange={handleProfileChange} />
-                        </div>
-                        <div>
-                            <Label htmlFor="companyAddress">Company Address</Label>
-                            <Textarea id="companyAddress" name="companyAddress" value={profile.companyAddress} onChange={handleProfileChange} />
-                        </div>
-                        <div>
-                            <Label>Company Logo</Label>
-                            <div className="flex items-center space-x-4">
-                                {profile.logo && <img src={profile.logo} alt="Company Logo" className="h-16 w-auto bg-slate-200 rounded" />}
-                                <Button onClick={() => document.getElementById('logo-upload').click()}>
-                                    {profile.logo ? 'Change Logo' : 'Upload Logo'}
-                                </Button>
-                                <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoChange} />
+                <div className="space-y-8">
+                    <Card>
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Company Profile</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="companyName">Company Name</Label>
+                                <Input id="companyName" name="companyName" value={profile.companyName} onChange={handleProfileChange} />
+                            </div>
+                            <div>
+                                <Label htmlFor="companyEmail">Company Email</Label>
+                                <Input id="companyEmail" name="companyEmail" type="email" value={profile.companyEmail} onChange={handleProfileChange} />
+                            </div>
+                            <div>
+                                <Label htmlFor="companyAddress">Company Address</Label>
+                                <Textarea id="companyAddress" name="companyAddress" value={profile.companyAddress} onChange={handleProfileChange} />
+                            </div>
+                            <div>
+                                <Label>Company Logo</Label>
+                                <div className="flex items-center space-x-4">
+                                    {profile.logo && <img src={profile.logo} alt="Company Logo" className="h-16 w-auto bg-slate-200 rounded" />}
+                                    <Button onClick={() => document.getElementById('logo-upload').click()}>
+                                        {profile.logo ? 'Change Logo' : 'Upload Logo'}
+                                    </Button>
+                                    <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoChange} />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </Card>
+                    </Card>
+                    <Card>
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Tax Settings</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="rate">Tax Rate (%)</Label>
+                                <Input
+                                    id="rate"
+                                    name="rate"
+                                    type="number"
+                                    value={tax.rate}
+                                    onChange={handleTaxChange}
+                                    placeholder="e.g., 25"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="inclusive">Tax Application</Label>
+                                <Select
+                                    id="inclusive"
+                                    name="inclusive"
+                                    value={tax.inclusive}
+                                    onChange={handleTaxChange}
+                                >
+                                    <option value="false">Add tax to final amount</option>
+                                    <option value="true">Price includes tax</option>
+                                </Select>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
 
                 <div className="space-y-8">
+                    <Card>
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Data Management</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Export your data to a file. This is useful for backups.</p>
+                                <Button onClick={onExport}>Export Data</Button>
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Import data from a file. This will overwrite your current data.</p>
+                                <Button onClick={handleImportClick}>Import Data</Button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    accept=".db"
+                                />
+                            </div>
+                        </div>
+                    </Card>
                     <Card>
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Currency & Language</h3>
                         <div className="space-y-4">
@@ -132,32 +190,11 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
                                     id="internalCostRate"
                                     name="internalCostRate"
                                     type="number"
-                                    value={profitability.internalCostRate}
+                                    value={profitability.internalCostRate || ''}
                                     onChange={handleProfitabilityChange}
                                     placeholder="e.g., 50"
                                 />
                                 <p className="text-sm text-slate-500 mt-1">Set your internal cost per hour for accurate project profitability tracking.</p>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card>
-                        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Data Management</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Export your data to a file. This is useful for backups.</p>
-                                <Button onClick={onExport}>Export Data</Button>
-                            </div>
-                            <div>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Import data from a file. This will overwrite your current data.</p>
-                                <Button onClick={handleImportClick}>Import Data</Button>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    accept=".db"
-                                />
                             </div>
                         </div>
                     </Card>

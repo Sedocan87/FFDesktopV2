@@ -183,9 +183,17 @@ const InvoicesView = ({ showToast }) => {
         };
 
         const taxRate = taxSettings.rate / 100;
-        const subtotal = invoice.amount;
-        const taxAmount = subtotal * taxRate;
-        const totalAmount = subtotal + taxAmount;
+        let subtotal, taxAmount, totalAmount;
+
+        if (taxSettings.inclusive) {
+            totalAmount = invoice.amount;
+            subtotal = totalAmount / (1 + taxRate);
+            taxAmount = totalAmount - subtotal;
+        } else {
+            subtotal = invoice.amount;
+            taxAmount = subtotal * taxRate;
+            totalAmount = subtotal + taxAmount;
+        }
 
         // Add header
         if (userProfile.logo) {
@@ -276,6 +284,7 @@ const InvoicesView = ({ showToast }) => {
                     onStatusChange={handleStatusChange}
                     onDelete={() => setInvoiceToDelete(viewingInvoice)}
                     userProfile={userProfile}
+                    taxSettings={taxSettings}
                 />
             ) : (
                 <>

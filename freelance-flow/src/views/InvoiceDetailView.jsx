@@ -3,12 +3,25 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import { formatCurrency } from '../lib/utils';
 
-const InvoiceDetailView = ({ invoice, client, onBack, onStatusChange, userProfile }) => {
+const InvoiceDetailView = ({ invoice, client, onBack, onStatusChange, userProfile, taxSettings }) => {
     const statusColors = {
         "Paid": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         "Draft": "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
         "Overdue": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
+
+    const taxRate = taxSettings.rate / 100;
+    let subtotal, taxAmount, totalAmount;
+
+    if (taxSettings.inclusive) {
+        totalAmount = invoice.amount;
+        subtotal = totalAmount / (1 + taxRate);
+        taxAmount = totalAmount - subtotal;
+    } else {
+        subtotal = invoice.amount;
+        taxAmount = subtotal * taxRate;
+        totalAmount = subtotal + taxAmount;
+    }
 
     return (
         <div>
@@ -90,8 +103,16 @@ const InvoiceDetailView = ({ invoice, client, onBack, onStatusChange, userProfil
                         </tbody>
                         <tfoot className="border-t-2 border-slate-200 dark:border-slate-700">
                              <tr>
-                                <td colSpan="3" className="p-4 text-right font-semibold text-slate-800 dark:text-white">Total</td>
-                                <td className="p-4 text-right font-bold text-xl text-slate-900 dark:text-white">{formatCurrency(invoice.amount, invoice.currency)}</td>
+                                <td colSpan="3" className="p-4 text-right font-semibold text-slate-800 dark:text-white">Subtotal</td>
+                                <td className="p-4 text-right font-mono text-slate-800 dark:text-white">{formatCurrency(subtotal, invoice.currency)}</td>
+                            </tr>
+                            <tr>
+                                <td colSpan="3" className="p-4 text-right font-semibold text-slate-800 dark:text-white">Tax ({taxSettings.rate}%)</td>
+                                <td className="p-4 text-right font-mono text-slate-800 dark:text-white">{formatCurrency(taxAmount, invoice.currency)}</td>
+                            </tr>
+                            <tr>
+                                <td colSpan="3" className="p-4 text-right font-bold text-xl text-slate-900 dark:text-white">Total</td>
+                                <td className="p-4 text-right font-bold text-xl text-slate-900 dark:text-white">{formatCurrency(totalAmount, invoice.currency)}</td>
                             </tr>
                         </tfoot>
                     </table>

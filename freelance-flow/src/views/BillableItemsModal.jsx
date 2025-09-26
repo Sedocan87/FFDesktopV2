@@ -65,7 +65,7 @@ const BillableItemsModal = ({ isOpen, onClose, unbilledEntries, unbilledExpenses
                                                 className="h-4 w-4 rounded border-slate-300 text-slate-600 focus:ring-slate-500 mr-3"
                                             />
                                             <label htmlFor={checkId} className="flex-grow cursor-pointer">
-                                                <p>Work done on {new Date(entry.start_time).toLocaleDateString()}</p>
+                                                <p>Work done on {entry.startTime ? new Date(entry.startTime).toLocaleDateString() : 'N/A'}</p>
                                                 <p className="text-sm text-slate-500 dark:text-slate-400">{entry.hours.toFixed(2)} hours at {formatCurrency(rate, currency)}/hr</p>
                                             </label>
                                         </div>

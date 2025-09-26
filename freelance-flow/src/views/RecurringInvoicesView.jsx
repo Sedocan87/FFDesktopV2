@@ -27,7 +27,7 @@ const RecurringInvoicesView = ({ showToast }) => {
         frequency: 'Monthly',
         startDate: new Date().toISOString().split('T')[0],
         lineItems: [{ description: '', amount: '' }],
-        currency: 'USD',
+        
         status: 'Active',
     };
 
@@ -58,7 +58,7 @@ const RecurringInvoicesView = ({ showToast }) => {
             frequency: rec.frequency,
             startDate: rec.nextDueDate,
             lineItems: rec.items,
-            currency: rec.currency,
+            
             status: rec.status,
         });
         setIsDialogOpen(true);
@@ -75,7 +75,7 @@ const RecurringInvoicesView = ({ showToast }) => {
                 frequency: formState.frequency,
                 nextDueDate: formState.startDate,
                 amount: totalAmount,
-                currency: formState.currency,
+                currency: currencySettings.default,
                 status: formState.status,
                 items: formState.lineItems.map(item => ({...item, amount: parseFloat(item.amount) || 0 }))
             };
@@ -89,7 +89,7 @@ const RecurringInvoicesView = ({ showToast }) => {
                 frequency: formState.frequency,
                 nextDueDate: formState.startDate,
                 amount: totalAmount,
-                currency: formState.currency,
+                currency: currencySettings.default,
                 status: 'Active',
                 items: formState.lineItems.map(item => ({...item, amount: parseFloat(item.amount) || 0 }))
             };
@@ -140,9 +140,17 @@ const RecurringInvoicesView = ({ showToast }) => {
         };
 
         const taxRate = taxSettings.rate / 100;
-        const subtotal = invoice.amount;
-        const taxAmount = subtotal * taxRate;
-        const totalAmount = subtotal + taxAmount;
+        let subtotal, taxAmount, totalAmount;
+
+        if (taxSettings.inclusive) {
+            totalAmount = invoice.amount;
+            subtotal = totalAmount / (1 + taxRate);
+            taxAmount = totalAmount - subtotal;
+        } else {
+            subtotal = invoice.amount;
+            taxAmount = subtotal * taxRate;
+            totalAmount = subtotal + taxAmount;
+        }
 
         // Add header
         if (userProfile.logo) {
@@ -280,12 +288,7 @@ const RecurringInvoicesView = ({ showToast }) => {
                                {clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                            </Select>
                        </div>
-                       <div>
-                           <Label htmlFor="currency">Currency</Label>
-                           <Select id="currency" value={formState.currency} onChange={handleFormStateChange}>
-                               {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
-                           </Select>
-                       </div>
+                       
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -309,7 +312,7 @@ const RecurringInvoicesView = ({ showToast }) => {
                                 <Input type="text" placeholder="Description" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} className="flex-grow"/>
                                 <div className="relative">
                                     <Input type="number" placeholder="Amount" value={item.amount} onChange={e => handleItemChange(index, 'amount', e.target.value)} className="w-28 pl-7"/>
-                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">{CURRENCIES.find(c => c.code === formState.currency)?.symbol || '$'}</span>
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">{CURRENCIES.find(c => c.code === currencySettings.default)?.symbol || '$'}</span>
                                 </div>
                                 <Button type="button" variant="ghost" onClick={() => handleRemoveItem(index)} className="text-red-500"><TrashIcon className="w-4 h-4" /></Button>
                             </div>
