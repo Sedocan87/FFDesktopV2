@@ -12,16 +12,16 @@ import RecurringInvoicesView from './RecurringInvoicesView';
 import BillableItemsModal from './BillableItemsModal';
 import { formatCurrency } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
-import { EyeIcon, CheckIcon, DownloadIcon, ArchiveIcon } from '../components/icons';
+import { EyeIcon, CheckIcon, DownloadIcon, TrashIcon } from '../components/icons';
 
 const InvoicesView = ({ showToast }) => {
-    const { projects, clients, timeEntries, invoices, addInvoice, updateInvoice, archiveInvoice,
+    const { projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
         expenses, userProfile, recurringInvoices, setRecurringInvoices,
         currencySettings, taxSettings, setTimeEntries, setExpenses, setIsNewInvoiceDialogOpen
     } = useStore();
-const [viewingInvoice, setViewingInvoice] = useState(null);
+    const [viewingInvoice, setViewingInvoice] = useState(null);
     const [invoiceToMark, setInvoiceToMark] = useState(null);
-    const [invoiceToArchive, setInvoiceToArchive] = useState(null);
+    const [invoiceToDelete, setInvoiceToDelete] = useState(null);
     const [activeTab, setActiveTab] = useState('one-time');
 
     const handleStatusChange = async (invoiceId, newStatus) => {
@@ -41,11 +41,11 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
         }
     };
 
-    const handleArchiveInvoice = async () => {
-        if (invoiceToArchive) {
-            await archiveInvoice(invoiceToArchive.id);
-            setInvoiceToArchive(null);
-            showToast("Invoice archived.");
+    const handleDeleteInvoice = async () => {
+        if (invoiceToDelete) {
+            await deleteInvoice(invoiceToDelete.id);
+            setInvoiceToDelete(null);
+            showToast("Invoice deleted.");
         }
     };
 
@@ -63,7 +63,7 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
                     client={clients.find(c => c.name === viewingInvoice.clientName)}
                     onBack={() => setViewingInvoice(null)}
                     onStatusChange={handleStatusChange}
-                    onDelete={() => setInvoiceToArchive(viewingInvoice)}
+                    onDelete={() => setInvoiceToDelete(viewingInvoice)}
                     userProfile={userProfile}
                     taxSettings={taxSettings}
                 />
@@ -140,8 +140,8 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
                                                     <Button variant="ghost" className={`px-2 ${invoice.status === 'Paid' ? 'text-green-500' : 'text-slate-400'}`} onClick={() => setInvoiceToMark(invoice)}>
                                                         <CheckIcon className="w-4 h-4" />
                                                     </Button>
-                                                    <Button variant="ghost" className="px-2" onClick={() => setInvoiceToArchive(invoice)}>
-                                                        <ArchiveIcon className="w-4 h-4" />
+                                                    <Button variant="ghost" className="px-2" onClick={() => setInvoiceToDelete(invoice)}>
+                                                        <TrashIcon className="w-4 h-4" />
                                                     </Button>
                                                 </div>
                                             </td>
@@ -159,11 +159,11 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
                 </>
             )}
 
-            <Dialog isOpen={!!invoiceToArchive} onClose={() => setInvoiceToArchive(null)} title="Archive Invoice">
-                <p>Are you sure you want to archive invoice "{invoiceToArchive?.id}"?</p>
+            <Dialog isOpen={!!invoiceToDelete} onClose={() => setInvoiceToDelete(null)} title="Delete Invoice">
+                <p>Are you sure you want to delete invoice "{invoiceToDelete?.id}"? This action cannot be undone.</p>
                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setInvoiceToArchive(null)}>Cancel</Button>
-                    <Button onClick={handleArchiveInvoice}>Archive</Button>
+                    <Button variant="secondary" onClick={() => setInvoiceToDelete(null)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleDeleteInvoice}>Delete</Button>
                 </div>
             </Dialog>
 

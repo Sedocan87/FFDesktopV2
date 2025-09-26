@@ -7,10 +7,10 @@ import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
 import Textarea from '../components/Textarea';
-import { EditIcon, ArchiveIcon } from '../components/icons';
+import { EditIcon, TrashIcon } from '../components/icons';
 
 const TimeTrackingView = ({ showToast }) => {
-    const { projects, timeEntries, addTimeEntry, updateTimeEntry, archiveTimeEntry,
+    const { projects, timeEntries, addTimeEntry, updateTimeEntry, deleteTimeEntry,
         isTimerRunning, setIsTimerRunning, timerStartTime, setTimerStartTime,
         elapsedTime, setElapsedTime, timerProjectId, setTimerProjectId
     } = useStore();
@@ -18,7 +18,7 @@ const TimeTrackingView = ({ showToast }) => {
     const [hours, setHours] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
-    const [entryToArchive, setEntryToArchive] = useState(null);
+    const [entryToDelete, setEntryToDelete] = useState(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState(null);
     const [editFormState, setEditFormState] = useState({
@@ -70,11 +70,11 @@ const TimeTrackingView = ({ showToast }) => {
         closeEditDialog();
     };
 
-    const handleArchiveEntry = async () => {
-        if (!entryToArchive) return;
-        await archiveTimeEntry(entryToArchive.id);
-        showToast("Time entry archived.");
-        setEntryToArchive(null);
+    const handleDeleteEntry = async () => {
+        if (!entryToDelete) return;
+        await deleteTimeEntry(entryToDelete.id);
+        showToast("Time entry deleted.");
+        setEntryToDelete(null);
     };
 
     const handleStartTimer = () => {
@@ -207,8 +207,8 @@ const TimeTrackingView = ({ showToast }) => {
                                                 <Button variant="ghost" className="px-2" onClick={() => openEditDialog(entry)}>
                                                     <EditIcon className="w-4 h-4" />
                                                 </Button>
-                                                <Button variant="ghost" className="px-2" onClick={() => setEntryToArchive(entry)}>
-                                                    <ArchiveIcon className="w-4 h-4" />
+                                                <Button variant="ghost" className="px-2" onClick={() => setEntryToDelete(entry)}>
+                                                    <TrashIcon className="w-4 h-4" />
                                                 </Button>
                                             </div>
                                         </td>
@@ -247,11 +247,11 @@ const TimeTrackingView = ({ showToast }) => {
                 </form>
             </Dialog>
 
-            <Dialog isOpen={!!entryToArchive} onClose={() => setEntryToArchive(null)} title="Archive Time Entry">
-                <p>Are you sure you want to archive this time entry?</p>
+            <Dialog isOpen={!!entryToDelete} onClose={() => setEntryToDelete(null)} title="Delete Time Entry">
+                <p>Are you sure you want to delete this time entry? This action cannot be undone.</p>
                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setEntryToArchive(null)}>Cancel</Button>
-                    <Button onClick={handleArchiveEntry}>Archive</Button>
+                    <Button variant="secondary" onClick={() => setEntryToDelete(null)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleDeleteEntry}>Delete</Button>
                 </div>
             </Dialog>
         </div>
