@@ -6,13 +6,13 @@ import Dialog from '../components/Dialog';
 import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
-import { EditIcon, ArchiveIcon } from '../components/icons';
+import { EditIcon, TrashIcon } from '../components/icons';
 import { formatCurrency } from '../lib/utils';
 
 const ExpensesView = ({ showToast }) => {
-    const { projects, expenses, addExpense, updateExpense, archiveExpense, setIsAddExpenseDialogOpen, setEditingExpense, currencySettings } = useStore();
-    const [expenseToArchive, setExpenseToArchive] = useState(null);
-    
+    const { projects, expenses, addExpense, updateExpense, deleteExpense, setIsAddExpenseDialogOpen, setEditingExpense, currencySettings } = useStore();
+    const [expenseToDelete, setExpenseToDelete] = useState(null);
+
 
     const projectMap = projects.reduce((acc, proj) => {
         acc[proj.id] = {name: proj.name };
@@ -21,11 +21,11 @@ const ExpensesView = ({ showToast }) => {
 
     
 
-    const handleArchiveExpense = async () => {
-        if (expenseToArchive) {
-            await archiveExpense(expenseToArchive.id);
-            setExpenseToArchive(null);
-            showToast("Expense archived.");
+    const handleDeleteExpense = async () => {
+        if (expenseToDelete) {
+            await deleteExpense(expenseToDelete.id);
+            setExpenseToDelete(null);
+            showToast("Expense deleted.");
         }
     };
 
@@ -74,8 +74,8 @@ const ExpensesView = ({ showToast }) => {
                                         <Button variant="ghost" className="px-2" onClick={() => { setIsAddExpenseDialogOpen(true); setEditingExpense(expense); }}>
                                             <EditIcon className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" className="px-2" onClick={() => setExpenseToArchive(expense)}>
-                                            <ArchiveIcon className="w-4 h-4" />
+                                        <Button variant="ghost" className="px-2" onClick={() => setExpenseToDelete(expense)}>
+                                            <TrashIcon className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </td>
@@ -85,11 +85,11 @@ const ExpensesView = ({ showToast }) => {
                 </table>
             </Card>
 
-            <Dialog isOpen={!!expenseToArchive} onClose={() => setExpenseToArchive(null)} title="Archive Expense">
-                <p>Are you sure you want to archive this expense: "{expenseToArchive?.description}"?</p>
+            <Dialog isOpen={!!expenseToDelete} onClose={() => setExpenseToDelete(null)} title="Delete Expense">
+                <p>Are you sure you want to delete this expense: "{expenseToDelete?.description}"? This action cannot be undone.</p>
                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setExpenseToArchive(null)}>Cancel</Button>
-                    <Button onClick={handleArchiveExpense}>Archive</Button>
+                    <Button variant="secondary" onClick={() => setExpenseToDelete(null)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleDeleteExpense}>Delete</Button>
                 </div>
             </Dialog>
         </div>

@@ -9,19 +9,10 @@ const ArchivedItemsView = ({ showToast }) => {
     const {
         clients,
         projects,
-        invoices,
-        timeEntries,
-        expenses,
         unarchiveClient,
         deleteClient,
         unarchiveProject,
         deleteProject,
-        unarchiveInvoice,
-        deleteInvoice,
-        unarchiveTimeEntry,
-        deleteTimeEntry,
-        unarchiveExpense,
-        deleteExpense,
     } = useStore();
 
     const [itemToUnarchive, setItemToUnarchive] = useState(null);
@@ -54,15 +45,6 @@ const ArchivedItemsView = ({ showToast }) => {
             case 'project':
                 await unarchiveProject(itemToUnarchive.id);
                 break;
-            case 'invoice':
-                await unarchiveInvoice(itemToUnarchive.id);
-                break;
-            case 'timeEntry':
-                await unarchiveTimeEntry(itemToUnarchive.id);
-                break;
-            case 'expense':
-                await unarchiveExpense(itemToUnarchive.id);
-                break;
             default:
                 break;
         }
@@ -81,15 +63,6 @@ const ArchivedItemsView = ({ showToast }) => {
             case 'project':
                 await deleteProject(itemToDelete.id);
                 break;
-            case 'invoice':
-                await deleteInvoice(itemToDelete.id);
-                break;
-            case 'timeEntry':
-                await deleteTimeEntry(itemToDelete.id);
-                break;
-            case 'expense':
-                await deleteExpense(itemToDelete.id);
-                break;
             default:
                 break;
         }
@@ -100,17 +73,9 @@ const ArchivedItemsView = ({ showToast }) => {
 
     const archivedClients = clients.filter(c => c.isArchived);
     const archivedProjects = projects.filter(p => p.isArchived);
-    const archivedInvoices = invoices.filter(i => i.isArchived);
-    const archivedTimeEntries = timeEntries.filter(t => t.isArchived);
-    const archivedExpenses = expenses.filter(e => e.isArchived);
 
     const clientMap = clients.reduce((acc, client) => {
         acc[client.id] = client;
-        return acc;
-    }, {});
-
-    const projectMap = projects.reduce((acc, project) => {
-        acc[project.id] = project;
         return acc;
     }, {});
 
@@ -126,9 +91,6 @@ const ArchivedItemsView = ({ showToast }) => {
                         if (type === 'project') {
                             const client = clientMap[item.clientId];
                             isUnarchiveDisabled = client && client.isArchived;
-                        } else if (type === 'timeEntry' || type === 'expense') {
-                            const project = projectMap[item.project_id || item.projectId];
-                            isUnarchiveDisabled = project && project.isArchived;
                         }
 
                         return (
@@ -154,9 +116,6 @@ const ArchivedItemsView = ({ showToast }) => {
         <div className="space-y-8">
             {renderSection('Archived Clients', archivedClients, 'client')}
             {renderSection('Archived Projects', archivedProjects, 'project')}
-            {renderSection('Archived Invoices', archivedInvoices, 'invoice')}
-            {renderSection('Archived Time Entries', archivedTimeEntries, 'timeEntry')}
-            {renderSection('Archived Expenses', archivedExpenses, 'expense')}
 
             <Dialog isOpen={!!itemToUnarchive} onClose={closeDialogs} title={`Unarchive ${itemType}`}>
                 <p>Are you sure you want to unarchive this {itemType}?</p>
