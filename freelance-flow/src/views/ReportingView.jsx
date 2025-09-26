@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import { formatCurrency } from '../lib/utils';
 
-const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices, profitabilitySettings }) => {
+const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices, profitabilitySettings, currencySettings }) => {
     const [filter, setFilter] = useState('all'); // 'week', 'month', 'all'
 
     const getFilteredEntries = useCallback(() => {
@@ -100,7 +100,14 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, 
             const profit = revenue - totalCost;
             const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
-            return { id: project.id, name: project.name, currency: 'USD', revenue, cost: totalCost, profit, margin }; // Assuming USD for now
+            const projectInvoices = invoices.filter(i => {
+                const projectTimeEntry = timeEntries.find(t => t.project_id === project.id && i.items.find(item => item.id === `time-${t.id}`));
+                return !!projectTimeEntry;
+            });
+
+            const currency = projectInvoices.length > 0 ? projectInvoices[0].currency : profitabilitySettings.default;
+
+            return { id: project.id, name: project.name, currency, revenue, cost: totalCost, profit, margin };
         });
     }, [projects, timeEntries, expenses, profitabilitySettings.internalCostRate]);
 
@@ -218,7 +225,7 @@ const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, 
                             </tbody>
                         </table>
                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                            Note: Profit is calculated assuming a 1:1 exchange rate. Costs are calculated using expense values and an internal cost rate set in your default currency (USD), without conversion.
+                            Note: Profit is calculated assuming a 1:1 exchange rate. Costs are calculated using expense values and an internal cost rate set in your default currency ({currencySettings.default}), without conversion.
                         </p>
                     </div>
                 </Card>

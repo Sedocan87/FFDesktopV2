@@ -173,6 +173,7 @@ const App = () => {
                 expenses={expenses}
                 taxSettings={taxSettings}
                 profitabilitySettings={profitabilitySettings}
+                currencySettings={currencySettings}
             />;
             case 'expenses': return <ExpensesView showToast={showToast} />;
             case 'settings': return <SettingsView showToast={showToast} onImport={handleImport} onExport={handleExportData} />;
