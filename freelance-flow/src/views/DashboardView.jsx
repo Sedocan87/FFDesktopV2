@@ -7,8 +7,9 @@ import useStore from '../store';
 import { FileTextIcon, BriefcaseIcon, ClockIcon, DollarSignIcon } from '../components/icons';
 
 
-const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices = [], expenses = [], taxSettings = {}, currencySettings = {} }) => {
-    const { setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen, setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen } = useStore();
+const DashboardView = ({ projects = [], clients = [], timeEntries = [], expenses = [], taxSettings = {}, currencySettings = {} }) => {
+    const { setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen, setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen, getInvoicesWithRecurring } = useStore();
+    const allInvoices = getInvoicesWithRecurring();
 
     const fabActions = [
         {
@@ -38,7 +39,7 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
     }, {});
 
     const currentYear = new Date().getFullYear();
-    const ytdRevenue = invoices
+    const ytdRevenue = allInvoices
         .filter(i => i.status === 'Paid' && new Date(i.issueDate).getFullYear() === currentYear)
         .reduce((acc, i) => {
             const taxRate = taxSettings.rate / 100;
@@ -51,7 +52,7 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
             return acc + totalAmount;
         }, 0);
 
-    const outstandingInvoices = invoices
+    const outstandingInvoices = allInvoices
         .filter(i => i.status === 'Draft' || i.status === 'Overdue')
         .reduce((acc, i) => {
             const taxRate = taxSettings.rate / 100;
@@ -66,7 +67,7 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
 
     const recentActivities = [
         ...timeEntries.slice(0, 3).map(t => ({ type: 'time', data: t, date: t.date })),
-        ...invoices.slice(0, 2).map(i => ({ type: 'invoice', data: i, date: i.issueDate }))
+        ...allInvoices.slice(0, 2).map(i => ({ type: 'invoice', data: i, date: i.issueDate }))
     ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
 
@@ -104,7 +105,7 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
                 <div className="lg:col-span-1">
-                    <TaxEstimator invoices={invoices} taxSettings={taxSettings} currencySettings={currencySettings} />
+                    <TaxEstimator invoices={allInvoices} taxSettings={taxSettings} currencySettings={currencySettings} />
                 </div>
                 <div className="lg:col-span-2">
                     <Card>
