@@ -144,7 +144,18 @@ const useStore = create((set, get) => ({
             expenses: state.expenses.map((e) => (projectIdsToArchive.includes(e.projectId) ? { ...e, isArchived: true } : e)),
         };
     }),
-    unarchiveClient: (id) => set((state) => ({ clients: state.clients.map((c) => (c.id === id ? { ...c, isArchived: false } : c)) })),
+    unarchiveClient: (id) => set((state) => {
+        const projectsToUnarchive = state.projects.filter((p) => p.clientId === id);
+        const projectIdsToUnarchive = projectsToUnarchive.map((p) => p.id);
+
+        return {
+            clients: state.clients.map((c) => (c.id === id ? { ...c, isArchived: false } : c)),
+            projects: state.projects.map((p) => (p.clientId === id ? { ...p, isArchived: false } : p)),
+            invoices: state.invoices.map((i) => (projectIdsToUnarchive.includes(i.projectId) ? { ...i, isArchived: false } : i)),
+            timeEntries: state.timeEntries.map((t) => (projectIdsToUnarchive.includes(t.project_id) ? { ...t, isArchived: false } : t)),
+            expenses: state.expenses.map((e) => (projectIdsToUnarchive.includes(e.projectId) ? { ...e, isArchived: false } : e)),
+        };
+    }),
 
     archiveProject: (id) => set((state) => ({
         projects: state.projects.map((p) => (p.id === id ? { ...p, isArchived: true } : p)),
@@ -152,7 +163,12 @@ const useStore = create((set, get) => ({
         timeEntries: state.timeEntries.map((t) => (t.project_id === id ? { ...t, isArchived: true } : t)),
         expenses: state.expenses.map((e) => (e.projectId === id ? { ...e, isArchived: true } : e)),
     })),
-    unarchiveProject: (id) => set((state) => ({ projects: state.projects.map((p) => (p.id === id ? { ...p, isArchived: false } : p)) })),
+    unarchiveProject: (id) => set((state) => ({
+        projects: state.projects.map((p) => (p.id === id ? { ...p, isArchived: false } : p)),
+        invoices: state.invoices.map((i) => (i.projectId === id ? { ...i, isArchived: false } : i)),
+        timeEntries: state.timeEntries.map((t) => (t.project_id === id ? { ...t, isArchived: false } : t)),
+        expenses: state.expenses.map((e) => (e.projectId === id ? { ...e, isArchived: false } : e)),
+    })),
 
     archiveInvoice: (id) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === id ? { ...i, isArchived: true } : i)) })),
     unarchiveInvoice: (id) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === id ? { ...i, isArchived: false } : i)) })),

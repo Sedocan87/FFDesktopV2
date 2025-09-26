@@ -104,6 +104,16 @@ const ArchivedItemsView = ({ showToast }) => {
     const archivedTimeEntries = timeEntries.filter(t => t.isArchived);
     const archivedExpenses = expenses.filter(e => e.isArchived);
 
+    const clientMap = clients.reduce((acc, client) => {
+        acc[client.id] = client;
+        return acc;
+    }, {});
+
+    const projectMap = projects.reduce((acc, project) => {
+        acc[project.id] = project;
+        return acc;
+    }, {});
+
     const renderSection = (title, items, type) => {
         if (items.length === 0) return null;
 
@@ -111,19 +121,30 @@ const ArchivedItemsView = ({ showToast }) => {
             <Card>
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{title}</h3>
                 <ul className="divide-y dark:divide-slate-800">
-                    {items.map(item => (
-                        <li key={item.id} className="flex justify-between items-center p-2">
-                            <span>{item.name || item.id}</span>
-                            <div className="flex gap-2">
-                                <Button variant="ghost" className="px-2" onClick={() => openUnarchiveDialog(item, type)}>
-                                    <UnarchiveIcon className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => openDeleteDialog(item, type)}>
-                                    <TrashIcon className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        </li>
-                    ))}
+                    {items.map(item => {
+                        let isUnarchiveDisabled = false;
+                        if (type === 'project') {
+                            const client = clientMap[item.clientId];
+                            isUnarchiveDisabled = client && client.isArchived;
+                        } else if (type === 'timeEntry' || type === 'expense') {
+                            const project = projectMap[item.project_id || item.projectId];
+                            isUnarchiveDisabled = project && project.isArchived;
+                        }
+
+                        return (
+                            <li key={item.id} className="flex justify-between items-center p-2">
+                                <span>{item.name || item.id}</span>
+                                <div className="flex gap-2">
+                                    <Button variant="ghost" className="px-2" onClick={() => openUnarchiveDialog(item, type)} disabled={isUnarchiveDisabled}>
+                                        <UnarchiveIcon className="w-4 h-4" />
+                                    </Button>
+                                    <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => openDeleteDialog(item, type)}>
+                                        <TrashIcon className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </li>
+                        );
+                    })}
                 </ul>
             </Card>
         );
