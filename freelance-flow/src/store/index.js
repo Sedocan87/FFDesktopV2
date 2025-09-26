@@ -71,6 +71,38 @@ const useStore = create((set, get) => ({
     setElapsedTime: (time) => set({ elapsedTime: time }),
     setTimerProjectId: (projectId) => set({ timerProjectId: projectId }),
 
+    getInvoicesWithRecurring: () => {
+        const { invoices, recurringInvoices } = get();
+        const generatedInvoices = [];
+        const today = new Date();
+
+        recurringInvoices.forEach(rec => {
+            if (rec.status !== 'Active') return;
+
+            let currentDate = new Date(rec.nextDueDate);
+            while (currentDate <= today) {
+                generatedInvoices.push({
+                    ...rec,
+                    id: `${rec.id}-${currentDate.toISOString().split('T')[0]}`,
+                    issueDate: currentDate.toISOString().split('T')[0],
+                    status: 'Draft',
+                });
+
+                if (rec.frequency === 'Monthly') {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                } else if (rec.frequency === 'Quarterly') {
+                    currentDate.setMonth(currentDate.getMonth() + 3);
+                } else if (rec.frequency === 'Annually') {
+                    currentDate.setFullYear(currentDate.getFullYear() + 1);
+                } else {
+                    break;
+                }
+            }
+        });
+
+        return [...invoices, ...generatedInvoices];
+    },
+
     loadInitialData: async () => {
         if (isTauri()) {
             set({ isLoading: true });
