@@ -10,16 +10,9 @@ import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 
 const ProjectsView = ({ showToast }) => {
-    const { projects, clients, timeEntries, addProject, updateProject, deleteProject } = useStore();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingProject, setEditingProject] = useState(null);
+    const { projects, clients, timeEntries, addProject, updateProject, deleteProject, setIsNewProjectDialogOpen, setEditingProject } = useStore();
     const [projectToDelete, setProjectToDelete] = useState(null);
-
-    const [formState, setFormState] = useState({
-        name: '',
-        clientId: clients.length > 0 ? clients[0].id : '',
-        rate: 100,
-    });
+    
 
     const clientMap = useMemo(() => clients.reduce((acc, client) => {
         acc[client.id] = client.name;
@@ -31,49 +24,7 @@ const ProjectsView = ({ showToast }) => {
         return acc;
     }, {}), [timeEntries]);
 
-    const openAddDialog = () => {
-        setEditingProject(null);
-        setFormState({
-            name: '',
-            clientId: clients.length > 0 ? clients[0].id : '',
-            rate: 100,
-        });
-        setIsDialogOpen(true);
-    };
-
-    const openEditDialog = (project) => {
-        setEditingProject(project);
-        setFormState({
-            name: project.name,
-            clientId: project.clientId,
-            rate: project.rate || 100,
-        });
-        setIsDialogOpen(true);
-    };
-
-    const closeDialog = () => {
-        setIsDialogOpen(false);
-        setEditingProject(null);
-    };
-
-    const handleFormChange = (e) => {
-        const { id, value } = e.target;
-        setFormState(prev => ({...prev, [id]: value}));
-    };
-
-    const handleSaveProject = async (e) => {
-        e.preventDefault();
-        if (formState.name.trim() && formState.clientId) {
-            if (editingProject) {
-                await updateProject(editingProject.id, formState.name, formState.clientId, parseFloat(formState.rate));
-                showToast("Project updated successfully!");
-            } else {
-                await addProject(formState.name, formState.clientId, parseFloat(formState.rate));
-                showToast("Project created successfully!");
-            }
-            closeDialog();
-        }
-    };
+    
 
     const handleDeleteProject = async () => {
         if (projectToDelete) {
@@ -90,7 +41,7 @@ const ProjectsView = ({ showToast }) => {
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Projects</h1>
                     <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your projects here.</p>
                 </div>
-                <Button onClick={openAddDialog}>Create New Project</Button>
+                <Button onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(null); }}>Create New Project</Button>
             </div>
 
             <Card className="overflow-x-auto">
@@ -113,7 +64,7 @@ const ProjectsView = ({ showToast }) => {
                                 <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{(projectHours[project.id] || 0).toFixed(2)}</td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" className="px-2" onClick={() => openEditDialog(project)}>
+                                        <Button variant="ghost" className="px-2" onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(project); }}>
                                             <EditIcon className="w-4 h-4" />
                                         </Button>
                                         <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setProjectToDelete(project)}>
@@ -127,30 +78,7 @@ const ProjectsView = ({ showToast }) => {
                 </table>
             </Card>
 
-            <Dialog isOpen={isDialogOpen} onClose={closeDialog} title={editingProject ? "Edit Project" : "Create New Project"}>
-                <form onSubmit={handleSaveProject} className="space-y-4">
-                    <div>
-                        <Label htmlFor="name">Project Name</Label>
-                        <Input id="name" type="text" value={formState.name} onChange={handleFormChange} required />
-                    </div>
-                    <div>
-                       <Label htmlFor="clientId">Client</Label>
-                       <Select id="clientId" value={formState.clientId} onChange={handleFormChange}>
-                           {clients.map(client => (
-                               <option key={client.id} value={client.id}>{client.name}</option>
-                           ))}
-                       </Select>
-                   </div>
-                   <div>
-                        <Label htmlFor="rate">Hourly Rate</Label>
-                        <Input id="rate" type="number" value={formState.rate} onChange={handleFormChange} />
-                    </div>
-                    <div className="flex justify-end gap-4 pt-4">
-                        <Button type="button" variant="secondary" onClick={closeDialog}>Cancel</Button>
-                        <Button type="submit">{editingProject ? "Save Changes" : "Create Project"}</Button>
-                    </div>
-                </form>
-            </Dialog>
+            
 
             <Dialog isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)} title="Delete Project">
                 <p>Are you sure you want to delete the project "{projectToDelete?.name}"? This will not delete its associated time entries but may affect reporting.</p>

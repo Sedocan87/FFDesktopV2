@@ -2,8 +2,33 @@ import React from 'react';
 import Card from '../components/Card';
 import TaxEstimator from './TaxEstimator';
 import { formatCurrency } from '../lib/utils';
+import FAB from '../components/FAB';
+import useStore from '../store';
+import { FileTextIcon, BriefcaseIcon, ClockIcon, DollarSignIcon } from '../components/icons';
+
 
 const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices = [], expenses = [], taxSettings = {}, currencySettings = {} }) => {
+    const { setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen, setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen } = useStore();
+
+    const fabActions = [
+        {
+            icon: <FileTextIcon className="w-6 h-6" />,
+            onClick: () => setIsNewInvoiceDialogOpen(true),
+        },
+        {
+            icon: <BriefcaseIcon className="w-6 h-6" />,
+            onClick: () => setIsNewProjectDialogOpen(true),
+        },
+        {
+            icon: <ClockIcon className="w-6 h-6" />,
+            onClick: () => setIsLogTimeDialogOpen(true),
+        },
+        {
+            icon: <DollarSignIcon className="w-6 h-6" />,
+            onClick: () => setIsAddExpenseDialogOpen(true),
+        },
+    ];
+
     const projectsWithData = projects.filter(p => p);
     const totalProjects = projectsWithData.length;
     const totalClients = clients.length;
@@ -111,6 +136,7 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], invoices
                     </Card>
                 </div>
             </div>
+            <FAB actions={fabActions} />
         </div>
     );
 };

@@ -11,8 +11,7 @@ import EditIcon from '../components/icons/EditIcon';
 import TrashIcon from '../components/icons/TrashIcon';
 
 const TimeTrackingView = ({ showToast }) => {
-    const {
-        projects, timeEntries, addTimeEntry, updateTimeEntry, deleteTimeEntry,
+    const { projects, timeEntries, addTimeEntry, updateTimeEntry, deleteTimeEntry,
         isTimerRunning, setIsTimerRunning, timerStartTime, setTimerStartTime,
         elapsedTime, setElapsedTime, timerProjectId, setTimerProjectId
     } = useStore();
@@ -159,7 +158,7 @@ const TimeTrackingView = ({ showToast }) => {
                 </div>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1">
                     <Card>
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Log Time Manually</h3>

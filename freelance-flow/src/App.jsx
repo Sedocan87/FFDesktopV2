@@ -19,6 +19,10 @@ import TimeTrackingView from './views/TimeTrackingView';
 import ReportingView from './views/ReportingView';
 import ExpensesView from './views/ExpensesView';
 import SettingsView from './views/SettingsView';
+import NewInvoiceDialog from './views/NewInvoiceDialog';
+import NewProjectDialog from './views/NewProjectDialog';
+import LogTimeDialog from './views/LogTimeDialog';
+import AddExpenseDialog from './views/AddExpenseDialog';
 
 const App = () => {
     const [activeView, setActiveView] = useState('dashboard');
@@ -248,6 +252,10 @@ const App = () => {
                     {renderView()}
                 </div>
             </main>
+            <NewInvoiceDialog showToast={showToast} />
+            <NewProjectDialog showToast={showToast} />
+            <LogTimeDialog showToast={showToast} />
+            <AddExpenseDialog showToast={showToast} />
         </div>
     );
 };
