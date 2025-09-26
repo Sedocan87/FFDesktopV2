@@ -17,3 +17,5 @@ export { default as PlusIcon } from './PlusIcon';
 export { default as DownloadIcon } from './DownloadIcon';
 export { default as EyeIcon } from './EyeIcon';
 export { default as CheckIcon } from './CheckIcon';
+export { default as ArchiveIcon } from './ArchiveIcon';
+export { default as UnarchiveIcon } from './UnarchiveIcon';

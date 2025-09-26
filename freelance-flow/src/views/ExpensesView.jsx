@@ -6,13 +6,12 @@ import Dialog from '../components/Dialog';
 import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
-import EditIcon from '../components/icons/EditIcon';
-import TrashIcon from '../components/icons/TrashIcon';
+import { EditIcon, ArchiveIcon } from '../components/icons';
 import { formatCurrency } from '../lib/utils';
 
 const ExpensesView = ({ showToast }) => {
-    const { projects, expenses, addExpense, updateExpense, deleteExpense, setIsAddExpenseDialogOpen, setEditingExpense, currencySettings } = useStore();
-    const [expenseToDelete, setExpenseToDelete] = useState(null);
+    const { projects, expenses, addExpense, updateExpense, archiveExpense, setIsAddExpenseDialogOpen, setEditingExpense, currencySettings } = useStore();
+    const [expenseToArchive, setExpenseToArchive] = useState(null);
     
 
     const projectMap = projects.reduce((acc, proj) => {
@@ -22,11 +21,11 @@ const ExpensesView = ({ showToast }) => {
 
     
 
-    const handleDeleteExpense = async () => {
-        if (expenseToDelete) {
-            await deleteExpense(expenseToDelete.id);
-            setExpenseToDelete(null);
-            showToast("Expense deleted.");
+    const handleArchiveExpense = async () => {
+        if (expenseToArchive) {
+            await archiveExpense(expenseToArchive.id);
+            setExpenseToArchive(null);
+            showToast("Expense archived.");
         }
     };
 
@@ -53,7 +52,7 @@ const ExpensesView = ({ showToast }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {expenses.map(expense => (
+                        {expenses.filter(expense => !expense.isArchived).map(expense => (
                             <tr key={expense.id}>
                                 <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[expense.project_id]?.name || 'N/A'}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{expense.description}</td>
@@ -75,8 +74,8 @@ const ExpensesView = ({ showToast }) => {
                                         <Button variant="ghost" className="px-2" onClick={() => { setIsAddExpenseDialogOpen(true); setEditingExpense(expense); }}>
                                             <EditIcon className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setExpenseToDelete(expense)}>
-                                            <TrashIcon className="w-4 h-4" />
+                                        <Button variant="ghost" className="px-2" onClick={() => setExpenseToArchive(expense)}>
+                                            <ArchiveIcon className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </td>
@@ -86,13 +85,11 @@ const ExpensesView = ({ showToast }) => {
                 </table>
             </Card>
 
-            
-
-             <Dialog isOpen={!!expenseToDelete} onClose={() => setExpenseToDelete(null)} title="Delete Expense">
-                <p>Are you sure you want to delete this expense: "{expenseToDelete?.description}"?</p>
+            <Dialog isOpen={!!expenseToArchive} onClose={() => setExpenseToArchive(null)} title="Archive Expense">
+                <p>Are you sure you want to archive this expense: "{expenseToArchive?.description}"?</p>
                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setExpenseToDelete(null)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDeleteExpense}>Delete</Button>
+                    <Button variant="secondary" onClick={() => setExpenseToArchive(null)}>Cancel</Button>
+                    <Button onClick={handleArchiveExpense}>Archive</Button>
                 </div>
             </Dialog>
         </div>

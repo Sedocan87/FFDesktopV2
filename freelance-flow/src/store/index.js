@@ -100,21 +100,69 @@ const useStore = create((set, get) => ({
         }
     },
 
-    addClient: (name, email) => set((state) => ({ clients: [...state.clients, { id: crypto.randomUUID(), name, email }] })),
+    addClient: (name, email) => set((state) => ({ clients: [...state.clients, { id: crypto.randomUUID(), name, email, isArchived: false }] })),
     updateClient: (id, name, email) => set((state) => ({ clients: state.clients.map((c) => (c.id === id ? { ...c, name, email } : c)) })),
-    deleteClient: (id) => set((state) => ({ clients: state.clients.filter((c) => c.id !== id) })),
-    addProject: (name, clientId, rate) => set((state) => ({ projects: [...state.projects, { id: crypto.randomUUID(), name, clientId, rate }] })),
+    deleteClient: (id) => set((state) => {
+        const projectsToDelete = state.projects.filter((p) => p.clientId === id);
+        const projectIdsToDelete = projectsToDelete.map((p) => p.id);
+
+        return {
+            clients: state.clients.filter((c) => c.id !== id),
+            projects: state.projects.filter((p) => p.clientId !== id),
+            invoices: state.invoices.filter((i) => !projectIdsToDelete.includes(i.projectId)),
+            timeEntries: state.timeEntries.filter((t) => !projectIdsToDelete.includes(t.project_id)),
+            expenses: state.expenses.filter((e) => !projectIdsToDelete.includes(e.projectId)),
+        };
+    }),
+    addProject: (name, clientId, rate) => set((state) => ({ projects: [...state.projects, { id: crypto.randomUUID(), name, clientId, rate, isArchived: false }] })),
     updateProject: (id, name, clientId, rate) => set((state) => ({ projects: state.projects.map((p) => (p.id === id ? { ...p, name, clientId, rate } : p)) })),
-    deleteProject: (id) => set((state) => ({ projects: state.projects.filter((p) => p.id !== id) })),
-    addTimeEntry: (project_id, startTime, endTime, hours) => set((state) => ({ timeEntries: [...state.timeEntries, { id: crypto.randomUUID(), project_id, startTime, endTime, hours }] })),
+    deleteProject: (id) => set((state) => ({
+        projects: state.projects.filter((p) => p.id !== id),
+        invoices: state.invoices.filter((i) => i.projectId !== id),
+        timeEntries: state.timeEntries.filter((t) => t.project_id !== id),
+        expenses: state.expenses.filter((e) => e.projectId !== id),
+    })),
+    addTimeEntry: (project_id, startTime, endTime, hours) => set((state) => ({ timeEntries: [...state.timeEntries, { id: crypto.randomUUID(), project_id, startTime, endTime, hours, isArchived: false }] })),
     updateTimeEntry: (id, project_id, startTime, endTime, hours) => set((state) => ({ timeEntries: state.timeEntries.map((t) => (t.id === id ? { ...t, project_id, startTime, endTime, hours } : t)) })),
     deleteTimeEntry: (id) => set((state) => ({ timeEntries: state.timeEntries.filter((t) => t.id !== id) })),
-    addInvoice: (invoice) => set((state) => ({ invoices: [...state.invoices, { ...invoice, id: invoice.id || crypto.randomUUID() }] })),
+    addInvoice: (invoice) => set((state) => ({ invoices: [...state.invoices, { ...invoice, id: invoice.id || crypto.randomUUID(), isArchived: false }] })),
     updateInvoice: (invoice) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === invoice.id ? invoice : i)) })),
     deleteInvoice: (id) => set((state) => ({ invoices: state.invoices.filter((i) => i.id !== id) })),
-    addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, { ...expense, id: expense.id || crypto.randomUUID() }] })),
+    addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, { ...expense, id: expense.id || crypto.randomUUID(), isArchived: false }] })),
     updateExpense: (expense) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === expense.id ? expense : e)) })),
     deleteExpense: (id) => set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
+
+    archiveClient: (id) => set((state) => {
+        const projectsToArchive = state.projects.filter((p) => p.clientId === id);
+        const projectIdsToArchive = projectsToArchive.map((p) => p.id);
+
+        return {
+            clients: state.clients.map((c) => (c.id === id ? { ...c, isArchived: true } : c)),
+            projects: state.projects.map((p) => (p.clientId === id ? { ...p, isArchived: true } : p)),
+            invoices: state.invoices.map((i) => (projectIdsToArchive.includes(i.projectId) ? { ...i, isArchived: true } : i)),
+            timeEntries: state.timeEntries.map((t) => (projectIdsToArchive.includes(t.project_id) ? { ...t, isArchived: true } : t)),
+            expenses: state.expenses.map((e) => (projectIdsToArchive.includes(e.projectId) ? { ...e, isArchived: true } : e)),
+        };
+    }),
+    unarchiveClient: (id) => set((state) => ({ clients: state.clients.map((c) => (c.id === id ? { ...c, isArchived: false } : c)) })),
+
+    archiveProject: (id) => set((state) => ({
+        projects: state.projects.map((p) => (p.id === id ? { ...p, isArchived: true } : p)),
+        invoices: state.invoices.map((i) => (i.projectId === id ? { ...i, isArchived: true } : i)),
+        timeEntries: state.timeEntries.map((t) => (t.project_id === id ? { ...t, isArchived: true } : t)),
+        expenses: state.expenses.map((e) => (e.projectId === id ? { ...e, isArchived: true } : e)),
+    })),
+    unarchiveProject: (id) => set((state) => ({ projects: state.projects.map((p) => (p.id === id ? { ...p, isArchived: false } : p)) })),
+
+    archiveInvoice: (id) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === id ? { ...i, isArchived: true } : i)) })),
+    unarchiveInvoice: (id) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === id ? { ...i, isArchived: false } : i)) })),
+
+    archiveTimeEntry: (id) => set((state) => ({ timeEntries: state.timeEntries.map((t) => (t.id === id ? { ...t, isArchived: true } : t)) })),
+    unarchiveTimeEntry: (id) => set((state) => ({ timeEntries: state.timeEntries.map((t) => (t.id === id ? { ...t, isArchived: false } : t)) })),
+
+    archiveExpense: (id) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, isArchived: true } : e)) })),
+    unarchiveExpense: (id) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, isArchived: false } : e)) })),
+
     updateUserProfile: (profile) => set({ userProfile: profile }),
     addRecurringInvoice: (invoice) => set((state) => ({ recurringInvoices: [...state.recurringInvoices, { ...invoice, id: invoice.id || crypto.randomUUID() }] })),
     updateRecurringInvoice: (invoice) => set((state) => ({ recurringInvoices: state.recurringInvoices.map((i) => (i.id === invoice.id ? invoice : i)) })),

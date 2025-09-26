@@ -6,12 +6,11 @@ import Dialog from '../components/Dialog';
 import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
-import EditIcon from '../components/icons/EditIcon';
-import TrashIcon from '../components/icons/TrashIcon';
+import { EditIcon, ArchiveIcon } from '../components/icons';
 
 const ProjectsView = ({ showToast }) => {
-    const { projects, clients, timeEntries, addProject, updateProject, deleteProject, setIsNewProjectDialogOpen, setEditingProject } = useStore();
-    const [projectToDelete, setProjectToDelete] = useState(null);
+    const { projects, clients, timeEntries, addProject, updateProject, setIsNewProjectDialogOpen, setEditingProject, archiveProject } = useStore();
+    const [projectToArchive, setProjectToArchive] = useState(null);
     
 
     const clientMap = useMemo(() => clients.reduce((acc, client) => {
@@ -25,12 +24,11 @@ const ProjectsView = ({ showToast }) => {
     }, {}), [timeEntries]);
 
     
-
-    const handleDeleteProject = async () => {
-        if (projectToDelete) {
-            await deleteProject(projectToDelete.id);
-            setProjectToDelete(null);
-            showToast("Project deleted.");
+    const handleArchiveProject = async () => {
+        if (projectToArchive) {
+            await archiveProject(projectToArchive.id);
+            setProjectToArchive(null);
+            showToast("Project archived.");
         }
     };
 
@@ -55,7 +53,7 @@ const ProjectsView = ({ showToast }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {projects.map(project => (
+                        {projects.filter(project => !project.isArchived).map(project => (
                              <tr key={project.id}>
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-300">
                                     {project.name}
@@ -67,8 +65,8 @@ const ProjectsView = ({ showToast }) => {
                                         <Button variant="ghost" className="px-2" onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(project); }}>
                                             <EditIcon className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setProjectToDelete(project)}>
-                                            <TrashIcon className="w-4 h-4" />
+                                        <Button variant="ghost" className="px-2" onClick={() => setProjectToArchive(project)}>
+                                            <ArchiveIcon className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </td>
@@ -78,13 +76,11 @@ const ProjectsView = ({ showToast }) => {
                 </table>
             </Card>
 
-            
-
-            <Dialog isOpen={!!projectToDelete} onClose={() => setProjectToDelete(null)} title="Delete Project">
-                <p>Are you sure you want to delete the project "{projectToDelete?.name}"? This will not delete its associated time entries but may affect reporting.</p>
-                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setProjectToDelete(null)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDeleteProject}>Delete</Button>
+            <Dialog isOpen={!!projectToArchive} onClose={() => setProjectToArchive(null)} title="Archive Project">
+                <p>Are you sure you want to archive the project "{projectToArchive?.name}"? This will also archive all associated invoices, time entries, and expenses.</p>
+                <div className="flex justify-end gap-4 mt-6">
+                    <Button variant="secondary" onClick={() => setProjectToArchive(null)}>Cancel</Button>
+                    <Button onClick={handleArchiveProject}>Archive</Button>
                 </div>
             </Dialog>
         </div>
