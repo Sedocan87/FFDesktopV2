@@ -55,6 +55,13 @@ const NewInvoiceDialog = ({ showToast }) => {
         const expensesAmount = selectedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
         const totalAmount = timeAmount + expensesAmount;
 
+        const projectIds = [
+            ...new Set([
+                ...selectedEntries.map(entry => entry.project_id),
+                ...selectedExpenses.map(expense => expense.project_id)
+            ])
+        ];
+
         const newInvoice = {
             id: `INV-${crypto.randomUUID()}`,
             clientName: clientObj.name,
@@ -64,6 +71,7 @@ const NewInvoiceDialog = ({ showToast }) => {
             status: 'Draft',
             currency: currencySettings.default,
             items: [...timeInvoiceItems, ...expenseInvoiceItems],
+            projectIds,
         };
 
         await addInvoice(newInvoice);
