@@ -5,14 +5,13 @@ import Card from '../components/Card';
 import Dialog from '../components/Dialog';
 import Input from '../components/Input';
 import Label from '../components/Label';
-import EditIcon from '../components/icons/EditIcon';
-import TrashIcon from '../components/icons/TrashIcon';
+import { EditIcon, ArchiveIcon } from '../components/icons';
 
 const ClientsView = ({ showToast, clientProjectCounts }) => {
-    const { clients, addClient, updateClient, deleteClient } = useStore();
+    const { clients, addClient, updateClient, archiveClient } = useStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingClient, setEditingClient] = useState(null);
-    const [clientToDelete, setClientToDelete] = useState(null);
+    const [clientToArchive, setClientToArchive] = useState(null);
 
     const [formName, setFormName] = useState('');
     const [formEmail, setFormEmail] = useState('');
@@ -50,11 +49,11 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
         }
     };
 
-    const handleDeleteClient = async () => {
-        if (clientToDelete) {
-            await deleteClient(clientToDelete.id);
-            setClientToDelete(null);
-            showToast("Client deleted.");
+    const handleArchiveClient = async () => {
+        if (clientToArchive) {
+            await archiveClient(clientToArchive.id);
+            setClientToArchive(null);
+            showToast("Client archived.");
         }
     };
 
@@ -80,7 +79,7 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {clients.map(client => (
+                        {clients.filter(client => !client.isArchived).map(client => (
                             <tr key={client.id}>
                                 <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{client.name}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{client.email}</td>
@@ -90,8 +89,8 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
                                         <Button variant="ghost" className="px-2" onClick={() => openEditDialog(client)}>
                                             <EditIcon className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setClientToDelete(client)}>
-                                            <TrashIcon className="w-4 h-4" />
+                                        <Button variant="ghost" className="px-2" onClick={() => setClientToArchive(client)}>
+                                            <ArchiveIcon className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </td>
@@ -118,11 +117,11 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
                 </form>
             </Dialog>
 
-            <Dialog isOpen={!!clientToDelete} onClose={() => setClientToDelete(null)} title="Delete Client">
-                <p>Are you sure you want to delete the client "{clientToDelete?.name}"? This action cannot be undone.</p>
+            <Dialog isOpen={!!clientToArchive} onClose={() => setClientToArchive(null)} title="Archive Client">
+                <p>Are you sure you want to archive the client "{clientToArchive?.name}"? This will also archive all associated projects, invoices, time entries, and expenses.</p>
                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setClientToDelete(null)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDeleteClient}>Delete</Button>
+                    <Button variant="secondary" onClick={() => setClientToArchive(null)}>Cancel</Button>
+                    <Button onClick={handleArchiveClient}>Archive</Button>
                 </div>
             </Dialog>
         </div>

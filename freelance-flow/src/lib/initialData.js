@@ -1,9 +1,9 @@
 export const initialClients = [
-    { id: "client-1", name: "Test Client", email: "test@client.com" }
+    { id: "client-1", name: "Test Client", email: "test@client.com", isArchived: false }
 ];
 
 export const initialProjects = [
-    { id: "project-1", name: "Test Project", clientId: "client-1", rate: 100 }
+    { id: "project-1", name: "Test Project", clientId: "client-1", rate: 100, isArchived: false }
 ];
 
 export const initialTimeEntries = [

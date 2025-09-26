@@ -12,16 +12,16 @@ import RecurringInvoicesView from './RecurringInvoicesView';
 import BillableItemsModal from './BillableItemsModal';
 import { formatCurrency } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
-import { EyeIcon, CheckIcon, TrashIcon, DownloadIcon } from '../components/icons';
+import { EyeIcon, CheckIcon, DownloadIcon, ArchiveIcon } from '../components/icons';
 
 const InvoicesView = ({ showToast }) => {
-    const { projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
+    const { projects, clients, timeEntries, invoices, addInvoice, updateInvoice, archiveInvoice,
         expenses, userProfile, recurringInvoices, setRecurringInvoices,
         currencySettings, taxSettings, setTimeEntries, setExpenses, setIsNewInvoiceDialogOpen
     } = useStore();
 const [viewingInvoice, setViewingInvoice] = useState(null);
     const [invoiceToMark, setInvoiceToMark] = useState(null);
-    const [invoiceToDelete, setInvoiceToDelete] = useState(null);
+    const [invoiceToArchive, setInvoiceToArchive] = useState(null);
     const [activeTab, setActiveTab] = useState('one-time');
 
     const handleStatusChange = async (invoiceId, newStatus) => {
@@ -41,27 +41,12 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
         }
     };
 
-    const handleDeleteInvoice = async () => {
-        if (!invoiceToDelete) return;
-
-        // Mark associated entries as unbilled
-        setTimeEntries(prevEntries =>
-            prevEntries.map(entry =>
-                entry.invoiceId === invoiceToDelete.id ? { ...entry, isBilled: false, invoiceId: null } : entry
-            )
-        );
-
-        // Mark associated expenses as unbilled
-        setExpenses(prevExpenses =>
-            prevExpenses.map(expense =>
-                expense.invoiceId === invoiceToDelete.id ? { ...expense, isBilled: false, invoiceId: null } : expense
-            )
-        );
-
-        await deleteInvoice(invoiceToDelete.id);
-        showToast(`Invoice ${invoiceToDelete.id} deleted.`);
-        setInvoiceToDelete(null);
-        setViewingInvoice(null);
+    const handleArchiveInvoice = async () => {
+        if (invoiceToArchive) {
+            await archiveInvoice(invoiceToArchive.id);
+            setInvoiceToArchive(null);
+            showToast("Invoice archived.");
+        }
     };
 
     const statusColors = {
@@ -78,7 +63,7 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
                     client={clients.find(c => c.name === viewingInvoice.clientName)}
                     onBack={() => setViewingInvoice(null)}
                     onStatusChange={handleStatusChange}
-                    onDelete={() => setInvoiceToDelete(viewingInvoice)}
+                    onDelete={() => setInvoiceToArchive(viewingInvoice)}
                     userProfile={userProfile}
                     taxSettings={taxSettings}
                 />
@@ -133,7 +118,7 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y dark:divide-slate-800">
-                                    {invoices.map(invoice => (
+                                    {invoices.filter(invoice => !invoice.isArchived).map(invoice => (
                                         <tr key={invoice.id}>
                                             <td className="p-4 font-medium text-slate-800 dark:text-slate-100 font-mono">{invoice.id}</td>
                                             <td className="p-4 text-slate-600 dark:text-slate-400">{invoice.clientName}</td>
@@ -155,8 +140,8 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
                                                     <Button variant="ghost" className={`px-2 ${invoice.status === 'Paid' ? 'text-green-500' : 'text-slate-400'}`} onClick={() => setInvoiceToMark(invoice)}>
                                                         <CheckIcon className="w-4 h-4" />
                                                     </Button>
-                                                    <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setInvoiceToDelete(invoice)}>
-                                                        <TrashIcon className="w-4 h-4" />
+                                                    <Button variant="ghost" className="px-2" onClick={() => setInvoiceToArchive(invoice)}>
+                                                        <ArchiveIcon className="w-4 h-4" />
                                                     </Button>
                                                 </div>
                                             </td>
@@ -174,13 +159,11 @@ const [viewingInvoice, setViewingInvoice] = useState(null);
                 </>
             )}
 
-            
-
-            <Dialog isOpen={!!invoiceToDelete} onClose={() => setInvoiceToDelete(null)} title="Delete Invoice">
-                <p>Are you sure you want to delete invoice "{invoiceToDelete?.id}"? This will mark all associated time and expense entries as unbilled. This action cannot be undone.</p>
+            <Dialog isOpen={!!invoiceToArchive} onClose={() => setInvoiceToArchive(null)} title="Archive Invoice">
+                <p>Are you sure you want to archive invoice "{invoiceToArchive?.id}"?</p>
                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setInvoiceToDelete(null)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDeleteInvoice}>Delete</Button>
+                    <Button variant="secondary" onClick={() => setInvoiceToArchive(null)}>Cancel</Button>
+                    <Button onClick={handleArchiveInvoice}>Archive</Button>
                 </div>
             </Dialog>
 

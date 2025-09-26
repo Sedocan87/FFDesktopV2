@@ -7,11 +7,10 @@ import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
 import Textarea from '../components/Textarea';
-import EditIcon from '../components/icons/EditIcon';
-import TrashIcon from '../components/icons/TrashIcon';
+import { EditIcon, ArchiveIcon } from '../components/icons';
 
 const TimeTrackingView = ({ showToast }) => {
-    const { projects, timeEntries, addTimeEntry, updateTimeEntry, deleteTimeEntry,
+    const { projects, timeEntries, addTimeEntry, updateTimeEntry, archiveTimeEntry,
         isTimerRunning, setIsTimerRunning, timerStartTime, setTimerStartTime,
         elapsedTime, setElapsedTime, timerProjectId, setTimerProjectId
     } = useStore();
@@ -19,7 +18,7 @@ const TimeTrackingView = ({ showToast }) => {
     const [hours, setHours] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
-    const [entryToDelete, setEntryToDelete] = useState(null);
+    const [entryToArchive, setEntryToArchive] = useState(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState(null);
     const [editFormState, setEditFormState] = useState({
@@ -71,11 +70,11 @@ const TimeTrackingView = ({ showToast }) => {
         closeEditDialog();
     };
 
-    const handleDeleteEntry = async () => {
-        if (!entryToDelete) return;
-        await deleteTimeEntry(entryToDelete.id);
-        showToast("Time entry deleted.");
-        setEntryToDelete(null);
+    const handleArchiveEntry = async () => {
+        if (!entryToArchive) return;
+        await archiveTimeEntry(entryToArchive.id);
+        showToast("Time entry archived.");
+        setEntryToArchive(null);
     };
 
     const handleStartTimer = () => {
@@ -198,7 +197,7 @@ const TimeTrackingView = ({ showToast }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y dark:divide-slate-800">
-                                {timeEntries.map(entry => (
+                                {timeEntries.filter(entry => !entry.isArchived).map(entry => (
                                     <tr key={entry.id}>
                                         <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.project_id]}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{entry.hours.toFixed(2)}</td>
@@ -208,8 +207,8 @@ const TimeTrackingView = ({ showToast }) => {
                                                 <Button variant="ghost" className="px-2" onClick={() => openEditDialog(entry)}>
                                                     <EditIcon className="w-4 h-4" />
                                                 </Button>
-                                                <Button variant="ghost" className="px-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" onClick={() => setEntryToDelete(entry)}>
-                                                    <TrashIcon className="w-4 h-4" />
+                                                <Button variant="ghost" className="px-2" onClick={() => setEntryToArchive(entry)}>
+                                                    <ArchiveIcon className="w-4 h-4" />
                                                 </Button>
                                             </div>
                                         </td>
@@ -248,11 +247,11 @@ const TimeTrackingView = ({ showToast }) => {
                 </form>
             </Dialog>
 
-            <Dialog isOpen={!!entryToDelete} onClose={() => setEntryToDelete(null)} title="Delete Time Entry">
-                <p>Are you sure you want to delete this time entry? This action cannot be undone.</p>
+            <Dialog isOpen={!!entryToArchive} onClose={() => setEntryToArchive(null)} title="Archive Time Entry">
+                <p>Are you sure you want to archive this time entry?</p>
                 <div className="flex justify-end gap-4 mt-6">
-                    <Button variant="secondary" onClick={() => setEntryToDelete(null)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDeleteEntry}>Delete</Button>
+                    <Button variant="secondary" onClick={() => setEntryToArchive(null)}>Cancel</Button>
+                    <Button onClick={handleArchiveEntry}>Archive</Button>
                 </div>
             </Dialog>
         </div>
