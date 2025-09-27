@@ -35,7 +35,7 @@ const NewInvoiceDialog = ({ showToast }) => {
         }
 
         const timeInvoiceItems = selectedEntries.map(entry => {
-            const project = projectMap[entry.project_id];
+            const project = projectMap[entry.projectId];
             const rate = project.rate; // Use the rate from the project
             return {
                 id: `time-${entry.id}`,
@@ -57,8 +57,8 @@ const NewInvoiceDialog = ({ showToast }) => {
 
         const projectIds = [
             ...new Set([
-                ...selectedEntries.map(entry => entry.project_id),
-                ...selectedExpenses.map(expense => expense.project_id)
+                ...selectedEntries.map(entry => entry.projectId),
+                ...selectedExpenses.map(expense => expense.projectId)
             ])
         ];
 
@@ -106,9 +106,9 @@ const NewInvoiceDialog = ({ showToast }) => {
         const clientProjectIds = clientProjects.map(p => p.id);
 
         const unbilledEntries = timeEntries.filter(entry =>
-            clientProjectIds.includes(entry.project_id) && !entry.isBilled
+            clientProjectIds.includes(entry.projectId) && !entry.isBilled
         ).map(entry => {
-            const project = projectMap[entry.project_id];
+            const project = projectMap[entry.projectId];
             return {
                 ...entry,
                 rate: project ? project.rate : 0,

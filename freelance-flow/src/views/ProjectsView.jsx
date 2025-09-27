@@ -19,7 +19,7 @@ const ProjectsView = ({ showToast }) => {
     }, {}), [clients]);
 
     const projectHours = useMemo(() => timeEntries.reduce((acc, entry) => {
-        acc[entry.project_id] = (acc[entry.project_id] || 0) + entry.hours;
+        acc[entry.projectId] = (acc[entry.projectId] || 0) + entry.hours;
         return acc;
     }, {}), [timeEntries]);
 

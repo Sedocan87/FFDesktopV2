@@ -30,9 +30,9 @@ const DashboardView = ({ projects = [], clients = [], timeEntries = [], expenses
         },
     ];
 
-    const projectsWithData = projects.filter(p => p);
+    const projectsWithData = projects.filter(p => p && !p.isArchived);
     const totalProjects = projectsWithData.length;
-    const totalClients = clients.length;
+    const totalClients = clients.filter(c => c && !c.isArchived).length;
     const projectMap = projectsWithData.reduce((acc, proj) => {
         acc[proj.id] = proj.name;
         return acc;

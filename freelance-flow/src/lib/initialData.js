@@ -7,7 +7,7 @@ export const initialProjects = [
 ];
 
 export const initialTimeEntries = [
-    { id: "time-1", project_id: "project-1", start_time: new Date().toISOString(), end_time: new Date(Date.now() + 1000 * 60 * 60).toISOString(), hours: 1, isBilled: false, invoiceId: null }
+    { id: "time-1", projectId: "project-1", start_time: new Date().toISOString(), end_time: new Date(Date.now() + 1000 * 60 * 60).toISOString(), hours: 1, isBilled: false, invoiceId: null }
 ];
 
 export const initialInvoices = [];

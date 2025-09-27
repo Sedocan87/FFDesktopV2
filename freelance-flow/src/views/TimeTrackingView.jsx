@@ -31,7 +31,7 @@ const TimeTrackingView = ({ showToast }) => {
     const openEditDialog = (entry) => {
         setEditingEntry(entry);
         setEditFormState({
-            project_id: entry.project_id,
+            project_id: entry.projectId,
             hours: entry.hours,
             date: new Date(entry.startTime).toISOString().split('T')[0],
             description: entry.description || '',
@@ -63,7 +63,8 @@ const TimeTrackingView = ({ showToast }) => {
             editFormState.project_id,
             startTime,
             endTime,
-            hoursNum
+            hoursNum,
+            editFormState.description
         );
 
         showToast("Time entry updated successfully!");
@@ -92,7 +93,8 @@ const TimeTrackingView = ({ showToast }) => {
         const startTime = new Date(timerStartTime).toISOString();
         const endTime = new Date().toISOString();
         const hours = elapsedTime / 3600;
-        await addTimeEntry(timerProjectId, startTime, endTime, hours);
+        const description = `Timer entry for ${timerProjectName}`;
+        await addTimeEntry(timerProjectId, startTime, endTime, hours, description);
 
         setTimerStartTime(null);
         setElapsedTime(0);
@@ -110,16 +112,18 @@ const TimeTrackingView = ({ showToast }) => {
         const startTime = startDate.toISOString();
         const endTime = new Date(startDate.getTime() + hoursNum * 3600000).toISOString();
 
-        await addTimeEntry(selectedProject, startTime, endTime, hoursNum);
+        await addTimeEntry(selectedProject, startTime, endTime, hoursNum, description);
         setHours('');
         setDescription('');
         showToast("Time entry logged successfully!");
     };
 
-    const projectMap = useMemo(() => projects.reduce((acc, proj) => {
-        acc[proj.id] = proj.name;
-        return acc;
-    }, {}), [projects]);
+    const projectMap = useMemo(() => {
+        return projects.reduce((acc, proj) => {
+            acc[proj.id] = proj.name;
+            return acc;
+        }, {});
+    }, [projects]);
 
     const timerProjectName = timerProjectId ? (projectMap[timerProjectId] || '') : '';
 
@@ -193,15 +197,17 @@ const TimeTrackingView = ({ showToast }) => {
                                     <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Project</th>
                                     <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Hours</th>
                                     <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Date</th>
+                                    <th className="p-4 font-semibold text-slate-600 dark:text-slate-300">Description</th>
                                     <th className="p-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y dark:divide-slate-800">
                                 {timeEntries.filter(entry => !entry.isArchived).map(entry => (
                                     <tr key={entry.id}>
-                                        <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.project_id]}</td>
+                                        <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.projectId]}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{entry.hours.toFixed(2)}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400">{new Date(entry.startTime).toLocaleDateString()}</td>
+                                        <td className="p-4 text-slate-600 dark:text-slate-400">{entry.description}</td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="ghost" className="px-2" onClick={() => openEditDialog(entry)}>
