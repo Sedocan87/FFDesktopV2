@@ -71,9 +71,15 @@ const DashboardView = () => {
             .map(t => ({ type: 'time', data: t, date: t.createdAt || t.startTime }));
         const invoiceActivities = allInvoices
             .map(i => ({ type: 'invoice', data: i, date: i.createdAt || i.issueDate }));
+        const projectActivities = projects
+            .filter(p => !p.isArchived)
+            .map(p => ({ type: 'project', data: p, date: p.createdAt }));
+        const expenseActivities = expenses
+            .filter(e => !e.isArchived)
+            .map(e => ({ type: 'expense', data: e, date: e.createdAt }));
 
-        return [...timeActivities, ...invoiceActivities].sort((a, b) => new Date(b.date) - new Date(a.date));
-    }, [timeEntries, allInvoices]);
+        return [...timeActivities, ...invoiceActivities, ...projectActivities, ...expenseActivities].sort((a, b) => new Date(b.date) - new Date(a.date));
+    }, [timeEntries, allInvoices, projects, expenses]);
 
 
     return (
@@ -132,6 +138,23 @@ const DashboardView = () => {
                                             <div>
                                                 <p className="font-medium text-slate-800 dark:text-slate-100">Invoice <span className="font-semibold">{activity.data.id.substring(0, 12)}...</span> for <span className="font-semibold">{activity.data.clientName}</span></p>
                                                 <p className="text-sm text-slate-500 dark:text-slate-400">Amount: {formatCurrency(activity.data.amount, activity.data.currency)}</p>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
+                                        </>
+                                    )}
+                                    {activity.type === 'project' && (
+                                        <>
+                                            <div>
+                                                <p className="font-medium text-slate-800 dark:text-slate-100">Created project: <span className="font-semibold">{activity.data.name}</span></p>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
+                                        </>
+                                    )}
+                                    {activity.type === 'expense' && (
+                                        <>
+                                            <div>
+                                                <p className="font-medium text-slate-800 dark:text-slate-100">Logged expense: <span className="font-semibold">{formatCurrency(activity.data.amount, currencySettings.default)}</span></p>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">{activity.data.description}</p>
                                             </div>
                                             <p className="text-sm text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
                                         </>

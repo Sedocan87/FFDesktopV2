@@ -144,7 +144,7 @@ const useStore = create((set, get) => ({
             expenses: state.expenses.filter((e) => !projectIdsToDelete.includes(e.projectId)),
         };
     }),
-    addProject: (name, clientId, rate) => set((state) => ({ projects: [...state.projects, { id: crypto.randomUUID(), name, clientId, rate, isArchived: false }] })),
+    addProject: (name, clientId, rate) => set((state) => ({ projects: [...state.projects, { id: crypto.randomUUID(), name, clientId, rate, isArchived: false, createdAt: new Date().toISOString() }] })),
     updateProject: (id, name, clientId, rate) => set((state) => ({ projects: state.projects.map((p) => (p.id === id ? { ...p, name, clientId, rate } : p)) })),
     deleteProject: (id) => set((state) => ({
         projects: state.projects.filter((p) => p.id !== id),

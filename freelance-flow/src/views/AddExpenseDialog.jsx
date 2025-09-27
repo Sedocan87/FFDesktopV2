@@ -37,6 +37,7 @@ const AddExpenseDialog = ({ showToast }) => {
             date,
             isBilled: false,
             isBillable: true, // This was missing
+            createdAt: new Date().toISOString(),
         });
 
         setAmount('');

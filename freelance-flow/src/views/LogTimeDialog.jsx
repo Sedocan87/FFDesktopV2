@@ -37,7 +37,8 @@ const LogTimeDialog = ({ showToast }) => {
             endTime,
             hours: hoursNum,
             description,
-            isBilled: false
+            isBilled: false,
+            createdAt: new Date().toISOString()
         });
         setHours('');
         setDescription('');
