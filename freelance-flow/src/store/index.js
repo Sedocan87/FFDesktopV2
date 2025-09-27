@@ -49,6 +49,8 @@ const useStore = create((set, get) => ({
     isAddExpenseDialogOpen: false,
     editingProject: null,
     editingExpense: null,
+    activeProject: null,
+    setActiveProject: (project) => set({ activeProject: project }),
     setEditingProject: (project) => set({ editingProject: project }),
     setEditingExpense: (expense) => set({ editingExpense: expense }),
     setIsNewInvoiceDialogOpen: (isOpen) => set({ isNewInvoiceDialogOpen: isOpen }),
@@ -144,7 +146,7 @@ const useStore = create((set, get) => ({
             expenses: state.expenses.filter((e) => !projectIdsToDelete.includes(e.projectId)),
         };
     }),
-    addProject: (name, clientId, rate) => set((state) => ({ projects: [...state.projects, { id: crypto.randomUUID(), name, clientId, rate, isArchived: false, createdAt: new Date().toISOString() }] })),
+    addProject: (name, clientId, rate) => set((state) => ({ projects: [...state.projects, { id: crypto.randomUUID(), name, clientId, rate, isArchived: false, createdAt: new Date().toISOString(), tasks: [] }] })),
     updateProject: (id, name, clientId, rate) => set((state) => ({ projects: state.projects.map((p) => (p.id === id ? { ...p, name, clientId, rate } : p)) })),
     deleteProject: (id) => set((state) => ({
         projects: state.projects.filter((p) => p.id !== id),
@@ -161,6 +163,38 @@ const useStore = create((set, get) => ({
     addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, { ...expense, id: expense.id || crypto.randomUUID(), isArchived: false }] })),
     updateExpense: (id, updates) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...updates } : e)) })),
     deleteExpense: (id) => set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
+    addTask: (projectId, task) => set((state) => {
+        const newProjects = state.projects.map((p) =>
+            p.id === projectId ? { ...p, tasks: [...(p.tasks || []), { ...task, id: crypto.randomUUID() }] } : p
+        );
+        return {
+            projects: newProjects,
+            activeProject: newProjects.find(p => p.id === projectId),
+        };
+    }),
+    updateTask: (projectId, taskId, updates) => set((state) => {
+        const newProjects = state.projects.map((p) =>
+            p.id === projectId
+                ? { ...p, tasks: (p.tasks || []).map((t) => (t.id === taskId ? { ...t, ...updates } : t)) }
+                : p
+        );
+        return {
+            projects: newProjects,
+            activeProject: newProjects.find(p => p.id === projectId),
+        };
+    }),
+    deleteTask: (projectId, taskId) => set((state) => {
+        const newProjects = state.projects.map((p) =>
+            p.id === projectId ? { ...p, tasks: (p.tasks || []).filter((t) => t.id !== taskId) } : p
+        );
+        return {
+            projects: newProjects,
+            activeProject: newProjects.find(p => p.id === projectId),
+        };
+    }),
+    setTasks: (projectId, tasks) => set((state) => ({
+        projects: state.projects.map((p) => (p.id === projectId ? { ...p, tasks } : p)),
+    })),
 
     archiveClient: (id) => set((state) => {
         const clientToArchive = state.clients.find((c) => c.id === id);

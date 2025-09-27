@@ -3,7 +3,7 @@ export const initialClients = [
 ];
 
 export const initialProjects = [
-    { id: "project-1", name: "Test Project", clientId: "client-1", rate: 100, isArchived: false }
+    { id: "project-1", name: "Test Project", clientId: "client-1", rate: 100, isArchived: false, createdAt: new Date().toISOString(), tasks: [] }
 ];
 
 export const initialTimeEntries = [

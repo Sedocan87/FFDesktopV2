@@ -9,7 +9,7 @@ import Select from '../components/Select';
 import { EditIcon, ArchiveIcon } from '../components/icons';
 
 const ProjectsView = ({ showToast }) => {
-    const { projects, clients, timeEntries, addProject, updateProject, setIsNewProjectDialogOpen, setEditingProject, archiveProject } = useStore();
+    const { projects, clients, timeEntries, addProject, updateProject, setIsNewProjectDialogOpen, setEditingProject, archiveProject, setActiveProject } = useStore();
     const [projectToArchive, setProjectToArchive] = useState(null);
     const activeProjects = useMemo(() => projects.filter(p => !p.isArchived), [projects]);
     
@@ -62,7 +62,9 @@ const ProjectsView = ({ showToast }) => {
                         {activeProjects.map(project => (
                              <tr key={project.id}>
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-300">
-                                    {project.name}
+                                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveProject(project); }} className="hover:underline">
+                                        {project.name}
+                                    </a>
                                 </td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{clientMap[project.clientId]}</td>
                                 <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{(projectHours[project.id] || 0).toFixed(2)}</td>

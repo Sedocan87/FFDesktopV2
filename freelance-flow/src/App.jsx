@@ -23,6 +23,7 @@ import NewInvoiceDialog from './views/NewInvoiceDialog';
 import NewProjectDialog from './views/NewProjectDialog';
 import LogTimeDialog from './views/LogTimeDialog';
 import AddExpenseDialog from './views/AddExpenseDialog';
+import KanbanView from './views/KanbanView';
 import FAB from './components/FAB';
 
 const App = () => {
@@ -39,7 +40,9 @@ const App = () => {
         setUserProfile, setRecurringInvoices, setTaxSettings, setCurrencySettings,
         setIsTimerRunning, setTimerStartTime, setElapsedTime, setTimerProjectId,
         loadInitialData, setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen,
-        setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen
+        setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen,
+        activeProject,
+        setActiveProject
     } = useStore();
 
     const showToast = (message) => {
@@ -119,6 +122,7 @@ const App = () => {
             href="#"
             onClick={(e) => {
                 e.preventDefault();
+                setActiveProject(null);
                 setActiveView(view);
                 setIsSidebarOpen(false);
             }}
@@ -250,7 +254,7 @@ const App = () => {
                 </header>
 
                 <div className="p-4 sm:p-6 lg:p-8">
-                    {renderView()}
+                    {activeProject ? <KanbanView /> : renderView()}
                 </div>
             </main>
             <NewInvoiceDialog showToast={showToast} />
