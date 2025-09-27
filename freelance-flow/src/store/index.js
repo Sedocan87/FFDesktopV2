@@ -152,7 +152,7 @@ const useStore = create((set, get) => ({
         timeEntries: state.timeEntries.filter((t) => t.projectId !== id),
         expenses: state.expenses.filter((e) => e.projectId !== id),
     })),
-    addTimeEntry: (projectId, startTime, endTime, hours, description) => set((state) => ({ timeEntries: [...state.timeEntries, { id: crypto.randomUUID(), projectId, startTime, endTime, hours, description, isArchived: false }] })),
+    addTimeEntry: (timeEntry) => set((state) => ({ timeEntries: [...state.timeEntries, { ...timeEntry, id: crypto.randomUUID(), isArchived: false }] })),
     updateTimeEntry: (id, projectId, startTime, endTime, hours, description) => set((state) => ({ timeEntries: state.timeEntries.map((t) => (t.id === id ? { ...t, projectId, startTime, endTime, hours, description } : t)) })),
     deleteTimeEntry: (id) => set((state) => ({ timeEntries: state.timeEntries.filter((t) => t.id !== id) })),
     addInvoice: (invoice) => set((state) => ({ invoices: [...state.invoices, { ...invoice, id: invoice.id || crypto.randomUUID(), isArchived: false }] })),

@@ -31,7 +31,14 @@ const LogTimeDialog = ({ showToast }) => {
         const startTime = startDate.toISOString();
         const endTime = new Date(startDate.getTime() + hoursNum * 3600000).toISOString();
 
-        await addTimeEntry(selectedProject, startTime, endTime, hoursNum);
+        await addTimeEntry({
+            projectId: selectedProject,
+            startTime,
+            endTime,
+            hours: hoursNum,
+            description,
+            isBilled: false
+        });
         setHours('');
         setDescription('');
         showToast("Time entry logged successfully!");

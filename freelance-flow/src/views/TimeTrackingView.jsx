@@ -248,7 +248,7 @@ const TimeTrackingView = ({ showToast }) => {
                                 {timeEntries.filter(entry => !entry.isArchived).map(entry => (
                                     <tr key={entry.id}>
                                         <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.projectId]}</td>
-                                        <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{entry.hours.toFixed(2)}</td>
+                                        <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{(entry.hours || 0).toFixed(2)}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400">{new Date(entry.startTime).toLocaleDateString()}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400">{entry.description}</td>
                                         <td className="p-4 text-right">
