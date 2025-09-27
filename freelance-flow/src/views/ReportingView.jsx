@@ -4,7 +4,10 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import { formatCurrency } from '../lib/utils';
 
-const ReportingView = ({ projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices, profitabilitySettings, currencySettings }) => {
+import useStore from '../store';
+
+const ReportingView = () => {
+    const { projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices, profitabilitySettings, currencySettings } = useStore();
     const [filter, setFilter] = useState('all'); // 'week', 'month', 'all'
 
     const getFilteredEntries = useCallback(() => {

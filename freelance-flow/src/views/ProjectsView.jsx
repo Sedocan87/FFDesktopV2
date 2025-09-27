@@ -11,6 +11,7 @@ import { EditIcon, ArchiveIcon } from '../components/icons';
 const ProjectsView = ({ showToast }) => {
     const { projects, clients, timeEntries, addProject, updateProject, setIsNewProjectDialogOpen, setEditingProject, archiveProject } = useStore();
     const [projectToArchive, setProjectToArchive] = useState(null);
+    const activeProjects = useMemo(() => projects.filter(p => !p.isArchived), [projects]);
     
 
     const clientMap = useMemo(() => clients.reduce((acc, client) => {
@@ -53,7 +54,7 @@ const ProjectsView = ({ showToast }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {projects.filter(project => !project.isArchived).map(project => (
+                        {activeProjects.map(project => (
                              <tr key={project.id}>
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-300">
                                     {project.name}

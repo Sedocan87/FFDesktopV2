@@ -49,8 +49,9 @@ const App = () => {
     }, [loadInitialData]);
 
     useEffect(() => {
-        if (projects.length > 0 && !timerProjectId) {
-            setTimerProjectId(projects[0].id);
+        const activeProjects = projects.filter(p => !p.isArchived);
+        if (activeProjects.length > 0 && (!timerProjectId || !activeProjects.some(p => p.id === timerProjectId))) {
+            setTimerProjectId(activeProjects[0].id);
         }
     }, [projects, timerProjectId, setTimerProjectId]);
 
@@ -151,41 +152,15 @@ const App = () => {
         }
         
         switch (activeView) {
-            case 'dashboard': return <DashboardView 
-                projects={projects}
-                clients={clients}
-                timeEntries={timeEntries}
-                invoices={invoices}
-                expenses={expenses}
-                taxSettings={taxSettings}
-                currencySettings={currencySettings}
-            />;
+            case 'dashboard': return <DashboardView />;
             case 'projects': return <ProjectsView showToast={showToast} />;
             case 'clients': return <ClientsView showToast={showToast} clientProjectCounts={clientProjectCounts} />;
             case 'invoices': return <InvoicesView showToast={showToast} />;
             case 'timetracking': return <TimeTrackingView showToast={showToast} />;
-            case 'reporting': return <ReportingView 
-                projects={projects}
-                clients={clients}
-                timeEntries={timeEntries}
-                invoices={invoices}
-                recurringInvoices={recurringInvoices}
-                expenses={expenses}
-                taxSettings={taxSettings}
-                profitabilitySettings={profitabilitySettings}
-                currencySettings={currencySettings}
-            />;
+            case 'reporting': return <ReportingView />;
             case 'expenses': return <ExpensesView showToast={showToast} />;
             case 'settings': return <SettingsView showToast={showToast} onImport={handleImport} onExport={handleExportData} />;
-            default: return <DashboardView 
-                projects={projects}
-                clients={clients}
-                timeEntries={timeEntries}
-                invoices={invoices}
-                expenses={expenses}
-                taxSettings={taxSettings}
-                currencySettings={currencySettings}
-            />;
+            default: return <DashboardView />;
         }
     };
     

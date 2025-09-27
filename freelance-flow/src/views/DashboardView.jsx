@@ -7,8 +7,8 @@ import useStore from '../store';
 import { FileTextIcon, BriefcaseIcon, ClockIcon, DollarSignIcon } from '../components/icons';
 
 
-const DashboardView = ({ projects = [], clients = [], timeEntries = [], expenses = [], taxSettings = {}, currencySettings = {} }) => {
-    const { setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen, setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen, getInvoicesWithRecurring } = useStore();
+const DashboardView = () => {
+    const { projects, clients, timeEntries, expenses, taxSettings, currencySettings, setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen, setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen, getInvoicesWithRecurring } = useStore();
     const allInvoices = getInvoicesWithRecurring();
 
     const fabActions = [

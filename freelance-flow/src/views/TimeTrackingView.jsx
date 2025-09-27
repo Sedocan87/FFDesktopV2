@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -14,7 +14,9 @@ const TimeTrackingView = ({ showToast }) => {
         isTimerRunning, setIsTimerRunning, timerStartTime, setTimerStartTime,
         elapsedTime, setElapsedTime, timerProjectId, setTimerProjectId
     } = useStore();
-    const [selectedProject, setSelectedProject] = useState(projects.length > 0 ? projects[0].id : '');
+    const [selectedProject, setSelectedProject] = useState('');
+    const activeProjects = useMemo(() => projects.filter(p => !p.isArchived), [projects]);
+
     const [hours, setHours] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
@@ -83,21 +85,39 @@ const TimeTrackingView = ({ showToast }) => {
             showToast("Please select a project to track.");
             return;
         }
+        const project = activeProjects.find(p => p.id === timerProjectId);
+        if (!project) {
+            showToast("The selected project could not be found.");
+            return;
+        }
         setIsTimerRunning(true);
         setTimerStartTime(Date.now());
         setElapsedTime(0);
     };
 
     const handleStopTimer = async () => {
+        if (!timerProjectId) {
+            showToast("No project was selected for this timer.");
+            setIsTimerRunning(false);
+            return;
+        }
+        const project = activeProjects.find(p => p.id === timerProjectId);
+        if (!project) {
+            showToast("The project for this timer could not be found.");
+            setIsTimerRunning(false);
+            return;
+        }
+
         setIsTimerRunning(false);
         const startTime = new Date(timerStartTime).toISOString();
         const endTime = new Date().toISOString();
         const hours = elapsedTime / 3600;
-        const description = `Timer entry for ${timerProjectName}`;
+        const description = `Timer entry for ${project.name}`;
         await addTimeEntry(timerProjectId, startTime, endTime, hours, description);
 
         setTimerStartTime(null);
         setElapsedTime(0);
+        setTimerProjectId(null);
         showToast(`Timer stopped at ${formatTime(elapsedTime)}.`);
     };
 
@@ -125,7 +145,14 @@ const TimeTrackingView = ({ showToast }) => {
         }, {});
     }, [projects]);
 
-    const timerProjectName = timerProjectId ? (projectMap[timerProjectId] || '') : '';
+    useEffect(() => {
+        if (activeProjects.length > 0 && !selectedProject) {
+            setSelectedProject(activeProjects[0].id);
+        }
+    }, [activeProjects, selectedProject]);
+
+    const timerProjectName = useMemo(() => projectMap[timerProjectId] || 'Unknown Project', [projectMap, timerProjectId]);
+
 
     const formatTime = (totalSeconds) => {
         const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
@@ -144,7 +171,7 @@ const TimeTrackingView = ({ showToast }) => {
                     <div className="flex-1 min-w-[200px]">
                          <Label htmlFor="timerProject">Track Project</Label>
                          <Select id="timerProject" value={timerProjectId || ''} onChange={(e) => setTimerProjectId(e.target.value)} disabled={isTimerRunning}>
-                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            {activeProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </Select>
                     </div>
                     <div className="text-center">
@@ -169,7 +196,7 @@ const TimeTrackingView = ({ showToast }) => {
                              <div>
                                 <Label htmlFor="logProject">Project</Label>
                                 <Select id="logProject" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    {activeProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </Select>
                             </div>
                             <div>
@@ -231,7 +258,7 @@ const TimeTrackingView = ({ showToast }) => {
                     <div>
                         <Label htmlFor="editProject">Project</Label>
                         <Select id="editProject" value={editFormState.project_id} onChange={e => setEditFormState({...editFormState, project_id: e.target.value})}>
-                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            {activeProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </Select>
                     </div>
                     <div>
