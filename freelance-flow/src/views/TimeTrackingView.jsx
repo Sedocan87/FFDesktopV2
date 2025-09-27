@@ -22,7 +22,7 @@ const TimeTrackingView = ({ showToast }) => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState(null);
     const [editFormState, setEditFormState] = useState({
-        project_id: '',
+        projectId: '',
         hours: '',
         date: '',
         description: '',
@@ -31,7 +31,7 @@ const TimeTrackingView = ({ showToast }) => {
     const openEditDialog = (entry) => {
         setEditingEntry(entry);
         setEditFormState({
-            project_id: entry.project_id,
+            projectId: entry.projectId,
             hours: entry.hours,
             date: new Date(entry.startTime).toISOString().split('T')[0],
             description: entry.description || '',
@@ -60,7 +60,7 @@ const TimeTrackingView = ({ showToast }) => {
 
         await updateTimeEntry(
             editingEntry.id,
-            editFormState.project_id,
+            editFormState.projectId,
             startTime,
             endTime,
             hoursNum
@@ -199,7 +199,7 @@ const TimeTrackingView = ({ showToast }) => {
                             <tbody className="divide-y dark:divide-slate-800">
                                 {timeEntries.filter(entry => !entry.isArchived).map(entry => (
                                     <tr key={entry.id}>
-                                        <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.project_id]}</td>
+                                        <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.projectId]}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{entry.hours.toFixed(2)}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400">{new Date(entry.startTime).toLocaleDateString()}</td>
                                         <td className="p-4 text-right">
@@ -224,7 +224,7 @@ const TimeTrackingView = ({ showToast }) => {
                 <form onSubmit={handleUpdateEntry} className="space-y-4">
                     <div>
                         <Label htmlFor="editProject">Project</Label>
-                        <Select id="editProject" value={editFormState.project_id} onChange={e => setEditFormState({...editFormState, project_id: e.target.value})}>
+                        <Select id="editProject" value={editFormState.projectId} onChange={e => setEditFormState({...editFormState, projectId: e.target.value})}>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </Select>
                     </div>
