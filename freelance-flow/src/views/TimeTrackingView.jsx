@@ -113,7 +113,15 @@ const TimeTrackingView = ({ showToast }) => {
         const endTime = new Date().toISOString();
         const hours = elapsedTime / 3600;
         const description = `Timer entry for ${project.name}`;
-        await addTimeEntry(timerProjectId, startTime, endTime, hours, description);
+        await addTimeEntry({
+            projectId: timerProjectId,
+            startTime,
+            endTime,
+            hours,
+            description,
+            createdAt: new Date().toISOString(),
+            isBilled: false
+        });
 
         setTimerStartTime(null);
         setElapsedTime(0);
@@ -132,7 +140,15 @@ const TimeTrackingView = ({ showToast }) => {
         const startTime = startDate.toISOString();
         const endTime = new Date(startDate.getTime() + hoursNum * 3600000).toISOString();
 
-        await addTimeEntry(selectedProject, startTime, endTime, hoursNum, description);
+        await addTimeEntry({
+            projectId: selectedProject,
+            startTime,
+            endTime,
+            hours: hoursNum,
+            description,
+            createdAt: new Date().toISOString(),
+            isBilled: false
+        });
         setHours('');
         setDescription('');
         showToast("Time entry logged successfully!");

@@ -12,11 +12,13 @@ const NewInvoiceDialog = ({ showToast }) => {
     const [isBillableModalOpen, setIsBillableModalOpen] = useState(false);
     const [itemsToBill, setItemsToBill] = useState({ entries: [], expenses: [] });
 
+    const activeClients = useMemo(() => clients.filter(c => !c.isArchived), [clients]);
+
     useEffect(() => {
-        if (clients.length > 0) {
-            setSelectedClient(clients[0].id);
+        if (activeClients.length > 0) {
+            setSelectedClient(activeClients[0].id);
         }
-    }, [clients]);
+    }, [activeClients]);
 
     const projectMap = useMemo(() => projects.reduce((acc, proj) => {
         acc[proj.id] = proj;
@@ -64,6 +66,7 @@ const NewInvoiceDialog = ({ showToast }) => {
 
         const newInvoice = {
             id: `INV-${crypto.randomUUID()}`,
+            createdAt: new Date().toISOString(),
             clientName: clientObj.name,
             issueDate: new Date().toISOString().split('T')[0],
             dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -116,7 +119,7 @@ const NewInvoiceDialog = ({ showToast }) => {
         });
 
         const unbilledExpenses = expenses.filter(expense =>
-            clientProjectIds.includes(expense.project_id) && !expense.isBilled && expense.isBillable
+            clientProjectIds.includes(expense.projectId) && !expense.isBilled && expense.isBillable
         );
 
         setItemsToBill({ entries: unbilledEntries, expenses: unbilledExpenses });
@@ -131,7 +134,7 @@ const NewInvoiceDialog = ({ showToast }) => {
                     <div>
                         <Label htmlFor="invoiceClient">Select Client</Label>
                         <Select id="invoiceClient" value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)}>
-                            {clients.map(client => (
+                            {activeClients.map(client => (
                                 <option key={client.id} value={client.id}>{client.name}</option>
                             ))}
                         </Select>

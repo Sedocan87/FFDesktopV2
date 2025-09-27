@@ -33,7 +33,7 @@ const DashboardView = () => {
     const projectsWithData = projects.filter(p => p && !p.isArchived);
     const totalProjects = projectsWithData.length;
     const totalClients = clients.filter(c => c && !c.isArchived).length;
-    const projectMap = projectsWithData.reduce((acc, proj) => {
+    const projectMap = projects.reduce((acc, proj) => {
         acc[proj.id] = proj.name;
         return acc;
     }, {});
@@ -65,10 +65,15 @@ const DashboardView = () => {
             return acc + totalAmount;
         }, 0);
 
-    const recentActivities = [
-        ...timeEntries.slice(0, 3).map(t => ({ type: 'time', data: t, date: t.date })),
-        ...allInvoices.slice(0, 2).map(i => ({ type: 'invoice', data: i, date: i.issueDate }))
-    ].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const recentActivities = React.useMemo(() => {
+        const timeActivities = timeEntries
+            .filter(t => !t.isArchived)
+            .map(t => ({ type: 'time', data: t, date: t.createdAt || t.startTime }));
+        const invoiceActivities = allInvoices
+            .map(i => ({ type: 'invoice', data: i, date: i.createdAt || i.issueDate }));
+
+        return [...timeActivities, ...invoiceActivities].sort((a, b) => new Date(b.date) - new Date(a.date));
+    }, [timeEntries, allInvoices]);
 
 
     return (
@@ -116,19 +121,19 @@ const DashboardView = () => {
                                     {activity.type === 'time' && (
                                         <>
                                             <div>
-                                                <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours?.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.project_id]}</span></p>
+                                                <p className="font-medium text-slate-800 dark:text-slate-100">Logged {activity.data.hours?.toFixed(1)} hours on <span className="font-semibold">{projectMap[activity.data.projectId] || 'Unknown Project'}</span></p>
                                                 <p className="text-sm text-slate-500 dark:text-slate-400">{activity.data.description}</p>
                                             </div>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
                                         </>
                                     )}
                                     {activity.type === 'invoice' && (
                                         <>
                                             <div>
-                                                <p className="font-medium text-slate-800 dark:text-slate-100">Invoice <span className="font-semibold">{activity.data.id}</span> created for <span className="font-semibold">{activity.data.clientName}</span></p>
+                                                <p className="font-medium text-slate-800 dark:text-slate-100">Invoice <span className="font-semibold">{activity.data.id.substring(0, 12)}...</span> for <span className="font-semibold">{activity.data.clientName}</span></p>
                                                 <p className="text-sm text-slate-500 dark:text-slate-400">Amount: {formatCurrency(activity.data.amount, activity.data.currency)}</p>
                                             </div>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">{activity.date}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">{new Date(activity.date).toLocaleDateString()}</p>
                                         </>
                                     )}
                                 </li>

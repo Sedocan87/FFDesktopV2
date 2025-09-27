@@ -159,7 +159,7 @@ const useStore = create((set, get) => ({
     updateInvoice: (invoice) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === invoice.id ? invoice : i)) })),
     deleteInvoice: (id) => set((state) => ({ invoices: state.invoices.filter((i) => i.id !== id) })),
     addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, { ...expense, id: expense.id || crypto.randomUUID(), isArchived: false }] })),
-    updateExpense: (expense) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === expense.id ? expense : e)) })),
+    updateExpense: (id, updates) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...updates } : e)) })),
     deleteExpense: (id) => set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
 
     archiveClient: (id) => set((state) => {

@@ -10,25 +10,28 @@ const ReportingView = () => {
     const { projects, timeEntries, expenses, taxSettings, clients, invoices, recurringInvoices, profitabilitySettings, currencySettings } = useStore();
     const [filter, setFilter] = useState('all'); // 'week', 'month', 'all'
 
+    const activeProjects = useMemo(() => projects.filter(p => !p.isArchived), [projects]);
+    const activeProjectIds = useMemo(() => new Set(activeProjects.map(p => p.id)), [activeProjects]);
+
     const getFilteredEntries = useCallback(() => {
         const now = new Date();
-        if (filter === 'all') return timeEntries;
+        const relevantTimeEntries = timeEntries.filter(t => activeProjectIds.has(t.projectId));
         if (filter === 'month') {
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            return timeEntries.filter(entry => new Date(entry.startTime) >= startOfMonth);
+            return relevantTimeEntries.filter(entry => new Date(entry.startTime) >= startOfMonth);
         }
         if (filter === 'week') {
             const startOfWeek = new Date(now);
             startOfWeek.setHours(0, 0, 0, 0);
             startOfWeek.setDate(startOfWeek.getDate() - now.getDay());
-            return timeEntries.filter(entry => new Date(entry.startTime) >= startOfWeek);
+            return relevantTimeEntries.filter(entry => new Date(entry.startTime) >= startOfWeek);
         }
-        return [];
-    }, [timeEntries, filter]);
+        return relevantTimeEntries;
+    }, [timeEntries, filter, activeProjectIds]);
 
     const filteredEntries = getFilteredEntries();
 
-    const projectMap = projects.reduce((acc, proj) => {
+    const projectMap = activeProjects.reduce((acc, proj) => {
         acc[proj.id] = { name: proj.name, clientId: proj.clientId, rate: proj.rate };
         return acc;
     }, {});
@@ -64,16 +67,16 @@ const ReportingView = () => {
         }
     }
 
-    const projectsWorkedOn = [...new Set(filteredEntries.map(entry => entry.project_id))].length;
+    const projectsWorkedOn = [...new Set(filteredEntries.map(entry => entry.projectId))].length;
 
     const hoursByProject = filteredEntries.reduce((acc, entry) => {
-        const projectName = projectMap[entry.project_id]?.name || 'Unknown Project';
+        const projectName = projectMap[entry.projectId]?.name || 'Unknown Project';
         acc[projectName] = (acc[projectName] || 0) + entry.hours;
         return acc;
     }, {});
 
     const hoursByClient = filteredEntries.reduce((acc, entry) => {
-        const project = projectMap[entry.project_id];
+        const project = projectMap[entry.projectId];
         const clientName = project ? clientMap[project.clientId] : 'Unknown Client';
         acc[clientName] = (acc[clientName] || 0) + entry.hours;
         return acc;
@@ -81,21 +84,21 @@ const ReportingView = () => {
 
     // Profitability Analysis Calculation (always 'All Time')
     const profitabilityData = useMemo(() => {
-        return projects.map(project => {
-            const projectTimeEntries = timeEntries.filter(t => t.project_id === project.id);
+        return activeProjects.map(project => {
+            const projectTimeEntries = timeEntries.filter(t => t.projectId === project.id);
             const totalHours = projectTimeEntries.reduce((sum, t) => sum + t.hours, 0);
 
             let revenue = 0;
             if (project.rate) {
                 revenue = totalHours * project.rate;
-            } else { // Fixed Price - assuming no rate means fixed price, but there is no budget field
+            } else {
                 revenue = 0; // No budget field, so revenue is 0 for now
             }
 
             const laborCost = totalHours * (profitabilitySettings.internalCostRate || 0);
 
             const expensesCost = expenses
-                .filter(e => e.project_id === project.id && !e.isBillable)
+                .filter(e => e.projectId === project.id && !e.isBillable)
                 .reduce((sum, e) => sum + e.amount, 0);
 
             const totalCost = laborCost + expensesCost;
@@ -104,7 +107,7 @@ const ReportingView = () => {
             const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
             const projectInvoices = invoices.filter(i => {
-                const projectTimeEntry = timeEntries.find(t => t.project_id === project.id && i.items.find(item => item.id === `time-${t.id}`));
+                const projectTimeEntry = timeEntries.find(t => t.projectId === project.id && i.items.find(item => item.id === `time-${t.id}`));
                 return !!projectTimeEntry;
             });
 
@@ -112,7 +115,7 @@ const ReportingView = () => {
 
             return { id: project.id, name: project.name, currency, revenue, cost: totalCost, profit, margin };
         });
-    }, [projects, timeEntries, expenses, profitabilitySettings.internalCostRate]);
+    }, [activeProjects, timeEntries, expenses, profitabilitySettings.internalCostRate, invoices]);
 
     return (
         <div>

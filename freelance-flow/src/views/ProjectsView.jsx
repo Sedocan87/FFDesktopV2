@@ -19,10 +19,15 @@ const ProjectsView = ({ showToast }) => {
         return acc;
     }, {}), [clients]);
 
-    const projectHours = useMemo(() => timeEntries.reduce((acc, entry) => {
-        acc[entry.projectId] = (acc[entry.projectId] || 0) + entry.hours;
-        return acc;
-    }, {}), [timeEntries]);
+    const projectHours = useMemo(() => {
+        const activeProjectIds = new Set(activeProjects.map(p => p.id));
+        return timeEntries
+            .filter(entry => activeProjectIds.has(entry.projectId))
+            .reduce((acc, entry) => {
+                acc[entry.projectId] = (acc[entry.projectId] || 0) + entry.hours;
+                return acc;
+            }, {});
+    }, [timeEntries, activeProjects]);
 
     
     const handleArchiveProject = async () => {

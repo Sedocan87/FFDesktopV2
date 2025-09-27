@@ -23,6 +23,7 @@ import NewInvoiceDialog from './views/NewInvoiceDialog';
 import NewProjectDialog from './views/NewProjectDialog';
 import LogTimeDialog from './views/LogTimeDialog';
 import AddExpenseDialog from './views/AddExpenseDialog';
+import FAB from './components/FAB';
 
 const App = () => {
     const [activeView, setActiveView] = useState('dashboard');
@@ -37,7 +38,8 @@ const App = () => {
         setData, setClients, setProjects, setTimeEntries, setInvoices, setExpenses,
         setUserProfile, setRecurringInvoices, setTaxSettings, setCurrencySettings,
         setIsTimerRunning, setTimerStartTime, setElapsedTime, setTimerProjectId,
-        loadInitialData
+        loadInitialData, setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen,
+        setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen
     } = useStore();
 
     const showToast = (message) => {
@@ -164,6 +166,29 @@ const App = () => {
         }
     };
     
+    const fabActions = [
+        {
+            icon: <FileTextIcon className="w-6 h-6" />,
+            label: 'New Invoice',
+            onClick: () => setIsNewInvoiceDialogOpen(true),
+        },
+        {
+            icon: <BriefcaseIcon className="w-6 h-6" />,
+            label: 'New Project',
+            onClick: () => setIsNewProjectDialogOpen(true),
+        },
+        {
+            icon: <ClockIcon className="w-6 h-6" />,
+            label: 'Log Time',
+            onClick: () => setIsLogTimeDialogOpen(true),
+        },
+        {
+            icon: <DollarSignIcon className="w-6 h-6" />,
+            label: 'Add Expense',
+            onClick: () => setIsAddExpenseDialogOpen(true),
+        },
+    ];
+
     const sidebarContent = (
          <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
             <div className="p-6 border-b dark:border-slate-800">
@@ -232,6 +257,7 @@ const App = () => {
             <NewProjectDialog showToast={showToast} />
             <LogTimeDialog showToast={showToast} />
             <AddExpenseDialog showToast={showToast} />
+            <FAB actions={fabActions} />
         </div>
     );
 };
