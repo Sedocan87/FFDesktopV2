@@ -11,7 +11,7 @@ import { EditIcon, TrashIcon } from '../components/icons';
 import { formatCurrency } from '../lib/utils';
 
 const ExpensesView = ({ showToast }) => {
-    const { projects, expenses, updateExpense, deleteExpense, currencySettings } = useStore();
+    const { projects, expenses, updateExpense, deleteExpense, currencySettings, setIsAddExpenseDialogOpen } = useStore();
     const [expenseToDelete, setExpenseToDelete] = useState(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
@@ -77,8 +77,13 @@ const ExpensesView = ({ showToast }) => {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Expenses</h1>
-            <p className="mt-1 text-slate-600 dark:text-slate-400">Track your project-related expenses.</p>
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Expenses</h1>
+                    <p className="mt-1 text-slate-600 dark:text-slate-400">Track your project-related expenses.</p>
+                </div>
+                <Button onClick={() => setIsAddExpenseDialogOpen(true)}>Create New Expense</Button>
+            </div>
 
             <Card className="mt-8 overflow-x-auto">
                 <table className="w-full text-left">
