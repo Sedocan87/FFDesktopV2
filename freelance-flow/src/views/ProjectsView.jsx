@@ -6,13 +6,14 @@ import Dialog from '../components/Dialog';
 import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { EditIcon, ArchiveIcon } from '../components/icons';
 
 const ProjectsView = ({ showToast }) => {
     const { projects, clients, timeEntries, addProject, updateProject, setIsNewProjectDialogOpen, setEditingProject, archiveProject, setActiveProject } = useStore();
     const [projectToArchive, setProjectToArchive] = useState(null);
     const activeProjects = useMemo(() => projects.filter(p => !p.isArchived), [projects]);
-    
 
     const clientMap = useMemo(() => clients.reduce((acc, client) => {
         acc[client.id] = client.name;
@@ -29,7 +30,6 @@ const ProjectsView = ({ showToast }) => {
             }, {});
     }, [timeEntries, activeProjects]);
 
-    
     const handleArchiveProject = async () => {
         if (projectToArchive) {
             await archiveProject(projectToArchive.id);
@@ -37,6 +37,8 @@ const ProjectsView = ({ showToast }) => {
             showToast("Project archived.");
         }
     };
+
+    const paginatedProjects = usePagination(activeProjects, 10);
 
     return (
         <div>
@@ -59,7 +61,7 @@ const ProjectsView = ({ showToast }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {activeProjects.map(project => (
+                        {paginatedProjects.currentData.map(project => (
                              <tr key={project.id}>
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-300">
                                     <a href="#" onClick={(e) => { e.preventDefault(); setActiveProject(project); }} className="hover:underline">
@@ -82,6 +84,13 @@ const ProjectsView = ({ showToast }) => {
                         ))}
                     </tbody>
                 </table>
+                <Pagination
+                    currentPage={paginatedProjects.currentPage}
+                    maxPage={paginatedProjects.maxPage}
+                    goToPage={paginatedProjects.goToPage}
+                    nextPage={paginatedProjects.nextPage}
+                    prevPage={paginatedProjects.prevPage}
+                />
             </Card>
 
             <Dialog isOpen={!!projectToArchive} onClose={() => setProjectToArchive(null)} title="Archive Project">

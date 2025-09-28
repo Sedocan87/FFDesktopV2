@@ -9,6 +9,8 @@ import Select from '../components/Select';
 import Textarea from '../components/Textarea';
 import { EditIcon, TrashIcon } from '../components/icons';
 import { formatCurrency } from '../lib/utils';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 const ExpensesView = ({ showToast }) => {
     const { projects, expenses, updateExpense, deleteExpense, currencySettings, setIsAddExpenseDialogOpen } = useStore();
@@ -75,6 +77,9 @@ const ExpensesView = ({ showToast }) => {
         setExpenseToDelete(null);
     };
 
+    const activeExpenses = useMemo(() => expenses.filter(exp => !exp.isArchived).sort((a, b) => new Date(b.date) - new Date(a.date)), [expenses]);
+    const paginatedExpenses = usePagination(activeExpenses, 10);
+
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
@@ -98,7 +103,7 @@ const ExpensesView = ({ showToast }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {expenses.filter(exp => !exp.isArchived).map(expense => (
+                        {paginatedExpenses.currentData.map(expense => (
                             <tr key={expense.id}>
                                 <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[expense.projectId] || 'N/A'}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{formatCurrency(expense.amount, currencySettings.default)}</td>
@@ -115,6 +120,13 @@ const ExpensesView = ({ showToast }) => {
                         ))}
                     </tbody>
                 </table>
+                <Pagination
+                    currentPage={paginatedExpenses.currentPage}
+                    maxPage={paginatedExpenses.maxPage}
+                    goToPage={paginatedExpenses.goToPage}
+                    nextPage={paginatedExpenses.nextPage}
+                    prevPage={paginatedExpenses.prevPage}
+                />
             </Card>
 
             <Dialog isOpen={isEditDialogOpen} onClose={closeEditDialog} title="Edit Expense">

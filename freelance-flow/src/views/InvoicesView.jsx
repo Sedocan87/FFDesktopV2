@@ -12,6 +12,8 @@ import RecurringInvoicesView from './RecurringInvoicesView';
 import BillableItemsModal from './BillableItemsModal';
 import { formatCurrency } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { EyeIcon, CheckIcon, DownloadIcon, TrashIcon } from '../components/icons';
 
 const InvoicesView = ({ showToast }) => {
@@ -54,6 +56,9 @@ const InvoicesView = ({ showToast }) => {
         "Draft": "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
         "Overdue": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
+
+    const activeInvoices = useMemo(() => invoices.filter(invoice => !invoice.isArchived), [invoices]);
+    const paginatedInvoices = usePagination(activeInvoices, 10);
 
     return (
         <div>
@@ -118,7 +123,7 @@ const InvoicesView = ({ showToast }) => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y dark:divide-slate-800">
-                                    {invoices.filter(invoice => !invoice.isArchived).map(invoice => (
+                                    {paginatedInvoices.currentData.map(invoice => (
                                         <tr key={invoice.id}>
                                             <td className="p-4 font-medium text-slate-800 dark:text-slate-100 font-mono">{invoice.id}</td>
                                             <td className="p-4 text-slate-600 dark:text-slate-400">{invoice.clientName}</td>
@@ -149,6 +154,13 @@ const InvoicesView = ({ showToast }) => {
                                     ))}
                                 </tbody>
                             </table>
+                             <Pagination
+                                currentPage={paginatedInvoices.currentPage}
+                                maxPage={paginatedInvoices.maxPage}
+                                goToPage={paginatedInvoices.goToPage}
+                                nextPage={paginatedInvoices.nextPage}
+                                prevPage={paginatedInvoices.prevPage}
+                            />
                         </Card>
                         </>
                     )}

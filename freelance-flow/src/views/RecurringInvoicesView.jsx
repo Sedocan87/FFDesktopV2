@@ -14,6 +14,8 @@ import DownloadIcon from '../components/icons/DownloadIcon';
 import CheckIcon from '../components/icons/CheckIcon';
 import { formatCurrency, CURRENCIES } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 const RecurringInvoicesView = ({ showToast }) => {
     const { clients, recurringInvoices, addRecurringInvoice, updateRecurringInvoice, deleteRecurringInvoice, userProfile, taxSettings, currencySettings } = useStore();
@@ -223,6 +225,8 @@ const RecurringInvoicesView = ({ showToast }) => {
         generatePdf(rec, client, userProfile, taxSettings);
     };
 
+    const paginatedRecurringInvoices = usePagination(recurringInvoices, 10);
+
     const statusColors = {
         "Paid": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         "Active": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
@@ -247,7 +251,7 @@ const RecurringInvoicesView = ({ showToast }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {recurringInvoices.map(rec => (
+                        {paginatedRecurringInvoices.currentData.map(rec => (
                             <tr key={rec.id}>
                                 <td className="p-4 font-medium">{rec.clientName}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{rec.frequency}</td>
@@ -278,6 +282,13 @@ const RecurringInvoicesView = ({ showToast }) => {
                         ))}
                     </tbody>
                 </table>
+                <Pagination
+                    currentPage={paginatedRecurringInvoices.currentPage}
+                    maxPage={paginatedRecurringInvoices.maxPage}
+                    goToPage={paginatedRecurringInvoices.goToPage}
+                    nextPage={paginatedRecurringInvoices.nextPage}
+                    prevPage={paginatedRecurringInvoices.prevPage}
+                />
             </Card>
              <Dialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} title={editingRecurring ? "Edit Recurring Profile" : "Create Recurring Profile"}>
                 <form onSubmit={handleSave} className="space-y-4">

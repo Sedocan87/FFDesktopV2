@@ -7,6 +7,8 @@ import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
 import Textarea from '../components/Textarea';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { EditIcon, TrashIcon } from '../components/icons';
 
 const TimeTrackingView = ({ showToast }) => {
@@ -161,6 +163,9 @@ const TimeTrackingView = ({ showToast }) => {
         }, {});
     }, [projects]);
 
+    const activeTimeEntries = useMemo(() => timeEntries.filter(entry => !entry.isArchived).sort((a, b) => new Date(b.startTime) - new Date(a.startTime)), [timeEntries]);
+    const paginatedEntries = usePagination(activeTimeEntries, 10);
+
     useEffect(() => {
         if (activeProjects.length > 0 && !selectedProject) {
             setSelectedProject(activeProjects[0].id);
@@ -245,7 +250,7 @@ const TimeTrackingView = ({ showToast }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y dark:divide-slate-800">
-                                {timeEntries.filter(entry => !entry.isArchived).map(entry => (
+                                {paginatedEntries.currentData.map(entry => (
                                     <tr key={entry.id}>
                                         <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[entry.projectId]}</td>
                                         <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{(entry.hours || 0).toFixed(2)}</td>
@@ -265,6 +270,13 @@ const TimeTrackingView = ({ showToast }) => {
                                 ))}
                             </tbody>
                         </table>
+                        <Pagination
+                            currentPage={paginatedEntries.currentPage}
+                            maxPage={paginatedEntries.maxPage}
+                            goToPage={paginatedEntries.goToPage}
+                            nextPage={paginatedEntries.nextPage}
+                            prevPage={paginatedEntries.prevPage}
+                        />
                     </Card>
                 </div>
             </div>

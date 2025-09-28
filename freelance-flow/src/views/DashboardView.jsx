@@ -4,6 +4,8 @@ import TaxEstimator from './TaxEstimator';
 import { formatCurrency } from '../lib/utils';
 import FAB from '../components/FAB';
 import useStore from '../store';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { FileTextIcon, BriefcaseIcon, ClockIcon, DollarSignIcon } from '../components/icons';
 
 
@@ -81,6 +83,8 @@ const DashboardView = () => {
         return [...timeActivities, ...invoiceActivities, ...projectActivities, ...expenseActivities].sort((a, b) => new Date(b.date) - new Date(a.date));
     }, [timeEntries, allInvoices, projects, expenses]);
 
+    const paginatedActivities = usePagination(recentActivities, 10);
+
 
     return (
         <div>
@@ -122,7 +126,7 @@ const DashboardView = () => {
                     <Card>
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Recent Activity</h3>
                         <ul className="divide-y dark:divide-slate-800">
-                            {recentActivities.slice(0, 5).map((activity, index) => (
+                            {paginatedActivities.currentData.map((activity, index) => (
                                 <li key={index} className="py-3 flex justify-between items-center">
                                     {activity.type === 'time' && (
                                         <>
@@ -162,6 +166,13 @@ const DashboardView = () => {
                                 </li>
                             ))}
                         </ul>
+                        <Pagination
+                            currentPage={paginatedActivities.currentPage}
+                            maxPage={paginatedActivities.maxPage}
+                            goToPage={paginatedActivities.goToPage}
+                            nextPage={paginatedActivities.nextPage}
+                            prevPage={paginatedActivities.prevPage}
+                        />
                     </Card>
                 </div>
             </div>
