@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import useStore from '../store';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Dialog from '../components/Dialog';
 import Input from '../components/Input';
 import Label from '../components/Label';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 import { EditIcon, ArchiveIcon } from '../components/icons';
 
 const ClientsView = ({ showToast, clientProjectCounts }) => {
@@ -57,6 +59,9 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
         }
     };
 
+    const activeClients = useMemo(() => clients.filter(client => !client.isArchived), [clients]);
+
+    const paginatedClients = usePagination(activeClients, 10);
 
     return (
         <div>
@@ -79,7 +84,7 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {clients.filter(client => !client.isArchived).map(client => (
+                        {paginatedClients.currentData.map(client => (
                             <tr key={client.id}>
                                 <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{client.name}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{client.email}</td>
@@ -98,6 +103,13 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
                         ))}
                     </tbody>
                 </table>
+                 <Pagination
+                    currentPage={paginatedClients.currentPage}
+                    maxPage={paginatedClients.maxPage}
+                    goToPage={paginatedClients.goToPage}
+                    nextPage={paginatedClients.nextPage}
+                    prevPage={paginatedClients.prevPage}
+                />
             </Card>
 
             <Dialog isOpen={isDialogOpen} onClose={closeDialog} title={editingClient ? "Edit Client" : "Add New Client"}>

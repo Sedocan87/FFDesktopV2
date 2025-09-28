@@ -3,6 +3,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { formatCurrency } from '../lib/utils';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
 
 import useStore from '../store';
 
@@ -82,6 +84,12 @@ const ReportingView = () => {
         acc[clientName] = (acc[clientName] || 0) + entry.hours;
         return acc;
     }, {});
+
+    const hoursByProjectArray = useMemo(() => Object.entries(hoursByProject).map(([name, hours]) => ({ name, hours })), [hoursByProject]);
+    const hoursByClientArray = useMemo(() => Object.entries(hoursByClient).map(([name, hours]) => ({ name, hours })), [hoursByClient]);
+
+    const paginatedHoursByProject = usePagination(hoursByProjectArray, 5);
+    const paginatedHoursByClient = usePagination(hoursByClientArray, 5);
 
     // Profitability Analysis Calculation (always 'All Time')
     const profitabilityData = useMemo(() => {
@@ -168,7 +176,7 @@ const ReportingView = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y dark:divide-slate-800">
-                                {Object.entries(hoursByProject).map(([name, hours]) => (
+                                {paginatedHoursByProject.currentData.map(({ name, hours }) => (
                                     <tr key={name}>
                                         <td className="p-4 font-medium">{name}</td>
                                         <td className="p-4 text-right font-mono">{hours.toFixed(2)}</td>
@@ -176,6 +184,13 @@ const ReportingView = () => {
                                 ))}
                             </tbody>
                         </table>
+                        <Pagination
+                            currentPage={paginatedHoursByProject.currentPage}
+                            maxPage={paginatedHoursByProject.maxPage}
+                            goToPage={paginatedHoursByProject.goToPage}
+                            nextPage={paginatedHoursByProject.nextPage}
+                            prevPage={paginatedHoursByProject.prevPage}
+                        />
                     </div>
                 </Card>
                 <Card>
@@ -189,7 +204,7 @@ const ReportingView = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y dark:divide-slate-800">
-                                {Object.entries(hoursByClient).map(([name, hours]) => (
+                                {paginatedHoursByClient.currentData.map(({ name, hours }) => (
                                     <tr key={name}>
                                         <td className="p-4 font-medium">{name}</td>
                                         <td className="p-4 text-right font-mono">{hours.toFixed(2)}</td>
@@ -197,6 +212,13 @@ const ReportingView = () => {
                                 ))}
                             </tbody>
                         </table>
+                        <Pagination
+                            currentPage={paginatedHoursByClient.currentPage}
+                            maxPage={paginatedHoursByClient.maxPage}
+                            goToPage={paginatedHoursByClient.goToPage}
+                            nextPage={paginatedHoursByClient.nextPage}
+                            prevPage={paginatedHoursByClient.prevPage}
+                        />
                     </div>
                 </Card>
             </div>
