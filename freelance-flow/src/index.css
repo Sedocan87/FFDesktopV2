@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  select {
+    @apply dark:bg-slate-800;
+  }
+}
