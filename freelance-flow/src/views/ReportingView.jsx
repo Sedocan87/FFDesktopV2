@@ -21,9 +21,10 @@ const ReportingView = () => {
             return relevantTimeEntries.filter(entry => new Date(entry.startTime) >= startOfMonth);
         }
         if (filter === 'week') {
-            const startOfWeek = new Date(now);
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            const startOfWeek = new Date(now.setDate(diff));
             startOfWeek.setHours(0, 0, 0, 0);
-            startOfWeek.setDate(startOfWeek.getDate() - now.getDay());
             return relevantTimeEntries.filter(entry => new Date(entry.startTime) >= startOfWeek);
         }
         return relevantTimeEntries;
