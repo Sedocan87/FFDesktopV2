@@ -190,7 +190,20 @@ const useStore = create((set, get) => ({
             expenses: newExpenses,
         };
     }),
-    addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, { ...expense, id: expense.id || crypto.randomUUID(), isArchived: false }] })),
+    addExpense: (expense) => set((state) => {
+        const project = state.projects.find(p => p.id === expense.projectId);
+        return {
+            expenses: [
+                ...state.expenses,
+                {
+                    ...expense,
+                    id: expense.id || crypto.randomUUID(),
+                    isArchived: false,
+                    projectName: project ? project.name : '',
+                }
+            ]
+        };
+    }),
     updateExpense: (id, updates) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...updates } : e)) })),
     deleteExpense: (id) => set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
     addTask: (projectId, task) => set((state) => {

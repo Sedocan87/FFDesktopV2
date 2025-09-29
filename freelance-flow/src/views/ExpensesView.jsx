@@ -105,7 +105,7 @@ const ExpensesView = ({ showToast }) => {
                     <tbody className="divide-y dark:divide-slate-800">
                         {paginatedExpenses.currentData.map(expense => (
                             <tr key={expense.id}>
-                                <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{projectMap[expense.projectId] || 'N/A'}</td>
+                                <td className="p-4 font-medium text-slate-800 dark:text-slate-100">{expense.projectName || projectMap[expense.projectId] || 'N/A'}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400 text-right font-mono">{formatCurrency(expense.amount, currencySettings.default)}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{new Date(expense.date).toLocaleDateString()}</td>
                                 <td className="p-4 text-slate-600 dark:text-slate-400">{expense.description}</td>
