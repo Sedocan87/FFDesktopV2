@@ -1,14 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod models;
+mod error;
 
-use rusqlite::{Connection, Result, params};
-use tauri::{AppHandle, Manager, State};
+use crate::error::Error;
+use rusqlite::{Connection, OptionalExtension, params};
+use tauri::{AppHandle, Manager};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use reqwest;
-use chrono::prelude::*;
 use dotenv::dotenv;
 use std::env;
 use models::{
@@ -37,41 +38,43 @@ pub struct AppState {
 }
 
 // A utility function to get the path to the database file
-fn get_db_path(app_handle: &AppHandle) -> PathBuf {
-    let config_dir = app_handle.path().app_config_dir().unwrap();
+// A utility function to get the path to the database file
+fn get_db_path(app_handle: &AppHandle) -> Result<PathBuf, Error> {
+    let config_dir = app_handle.path().app_config_dir()?;
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir).unwrap();
+        fs::create_dir_all(&config_dir)?;
     }
-    config_dir.join("app_data.db")
+    Ok(config_dir.join("app_data.db"))
 }
 
 #[tauri::command]
-fn export_database(app_handle: AppHandle) -> Result<Vec<u8>, String> {
-    let db_path = get_db_path(&app_handle);
-    fs::read(db_path).map_err(|e| e.to_string())
+fn export_database(app_handle: AppHandle) -> Result<Vec<u8>, Error> {
+    let db_path = get_db_path(&app_handle)?;
+    Ok(fs::read(db_path)?)
 }
 
 #[tauri::command]
-fn import_database(app_handle: AppHandle, data: Vec<u8>) -> Result<(), String> {
-    let db_path = get_db_path(&app_handle);
-    fs::write(db_path, data).map_err(|e| e.to_string())
+fn import_database(app_handle: AppHandle, data: Vec<u8>) -> Result<(), Error> {
+    let db_path = get_db_path(&app_handle)?;
+    fs::write(db_path, data)?;
+    Ok(())
 }
 
 #[tauri::command]
-fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
-    let db_path = get_db_path(&app_handle);
-    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+fn load_all_data(app_handle: AppHandle) -> Result<AppData, Error> {
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)?;
 
-    let mut stmt = conn.prepare("SELECT id, name, email FROM clients").unwrap();
+    let mut stmt = conn.prepare("SELECT id, name, email FROM clients")?;
     let clients = stmt.query_map([], |row| {
         Ok(Client {
             id: row.get(0)?,
             name: row.get(1)?,
             email: row.get(2)?,
         })
-    }).unwrap().map(|r| r.unwrap()).collect();
+    })?.collect::<Result<Vec<_>, _>>()?;
 
-    let mut stmt = conn.prepare("SELECT id, name, client_id, rate FROM projects").unwrap();
+    let mut stmt = conn.prepare("SELECT id, name, client_id, rate FROM projects")?;
     let projects = stmt.query_map([], |row| {
         Ok(Project {
             id: row.get(0)?,
@@ -79,9 +82,9 @@ fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
             client_id: row.get(2)?,
             rate: row.get(3)?,
         })
-    }).unwrap().map(|r| r.unwrap()).collect();
+    })?.collect::<Result<Vec<_>, _>>()?;
 
-    let mut stmt = conn.prepare("SELECT id, project_id, start_time, end_time FROM time_entries").unwrap();
+    let mut stmt = conn.prepare("SELECT id, project_id, start_time, end_time FROM time_entries")?;
     let time_entries = stmt.query_map([], |row| {
         Ok(TimeEntry {
             id: row.get(0)?,
@@ -89,9 +92,9 @@ fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
             start_time: row.get(2)?,
             end_time: row.get(3)?,
         })
-    }).unwrap().map(|r| r.unwrap()).collect();
+    })?.collect::<Result<Vec<_>, _>>()?;
 
-    let mut stmt = conn.prepare("SELECT id, client_name, issue_date, due_date, amount, status, currency FROM invoices").unwrap();
+    let mut stmt = conn.prepare("SELECT id, client_name, issue_date, due_date, amount, status, currency FROM invoices")?;
     let invoices = stmt.query_map([], |row| {
         Ok(Invoice {
             id: row.get(0)?,
@@ -102,9 +105,9 @@ fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
             status: row.get(5)?,
             currency: row.get(6)?,
         })
-    }).unwrap().map(|r| r.unwrap()).collect();
+    })?.collect::<Result<Vec<_>, _>>()?;
 
-    let mut stmt = conn.prepare("SELECT id, project_id, description, amount, date, is_billed, is_billable FROM expenses").unwrap();
+    let mut stmt = conn.prepare("SELECT id, project_id, description, amount, date, is_billed, is_billable FROM expenses")?;
     let expenses = stmt.query_map([], |row| {
         Ok(Expense {
             id: row.get(0)?,
@@ -115,9 +118,9 @@ fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
             is_billed: row.get(5)?,
             is_billable: row.get(6)?,
         })
-    }).unwrap().map(|r| r.unwrap()).collect();
+    })?.collect::<Result<Vec<_>, _>>()?;
 
-    let mut stmt = conn.prepare("SELECT company_name, company_email, company_address, logo FROM user_profile").unwrap();
+    let mut stmt = conn.prepare("SELECT company_name, company_email, company_address, logo FROM user_profile")?;
     let user_profile = stmt.query_row([], |row| {
         Ok(UserProfile {
             company_name: row.get(0)?,
@@ -125,9 +128,9 @@ fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
             company_address: row.get(2)?,
             logo: row.get(3)?,
         })
-    }).unwrap_or_default();
+    }).optional()?.unwrap_or_default();
 
-    let mut stmt = conn.prepare("SELECT id, client_name, frequency, next_due_date, amount, currency, status FROM recurring_invoices").unwrap();
+    let mut stmt = conn.prepare("SELECT id, client_name, frequency, next_due_date, amount, currency, status FROM recurring_invoices")?;
     let recurring_invoices = stmt.query_map([], |row| {
         Ok(RecurringInvoice {
             id: row.get(0)?,
@@ -138,23 +141,23 @@ fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
             currency: row.get(5)?,
             status: row.get(6)?,
         })
-    }).unwrap().map(|r| r.unwrap()).collect();
+    })?.collect::<Result<Vec<_>, _>>()?;
 
-    let mut stmt = conn.prepare("SELECT rate, internal_cost_rate FROM tax_settings").unwrap();
+    let mut stmt = conn.prepare("SELECT rate, internal_cost_rate FROM tax_settings")?;
     let tax_settings = stmt.query_row([], |row| {
         Ok(TaxSettings {
             rate: row.get(0)?,
             internal_cost_rate: row.get(1)?,
         })
-    }).unwrap_or_default();
+    }).optional()?.unwrap_or_default();
 
-    let mut stmt = conn.prepare("SELECT default_currency, invoice_language FROM currency_settings").unwrap();
+    let mut stmt = conn.prepare("SELECT default_currency, invoice_language FROM currency_settings")?;
     let currency_settings = stmt.query_row([], |row| {
         Ok(CurrencySettings {
             default_currency: row.get(0)?,
             invoice_language: row.get(1)?,
         })
-    }).unwrap_or_default();
+    }).optional()?.unwrap_or_default();
 
     Ok(AppData {
         clients,
@@ -170,70 +173,70 @@ fn load_all_data(app_handle: AppHandle) -> Result<AppData, String> {
 }
 
 #[tauri::command]
-fn save_all_data(app_handle: AppHandle, data: AppData) -> Result<(), String> {
-    let db_path = get_db_path(&app_handle);
-    let mut conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+fn save_all_data(app_handle: AppHandle, data: AppData) -> Result<(), Error> {
+    let db_path = get_db_path(&app_handle)?;
+    let mut conn = Connection::open(&db_path)?;
 
-    let tx = conn.transaction().unwrap();
+    let tx = conn.transaction()?;
 
     for client in &data.clients {
         tx.execute(
             "INSERT OR REPLACE INTO clients (id, name, email) VALUES (?1, ?2, ?3)",
             params![&client.id, &client.name, &client.email],
-        ).unwrap();
+        )?;
     }
 
     for project in &data.projects {
         tx.execute(
             "INSERT OR REPLACE INTO projects (id, name, client_id, rate) VALUES (?1, ?2, ?3, ?4)",
             params![&project.id, &project.name, &project.client_id, &project.rate],
-        ).unwrap();
+        )?;
     }
 
     for time_entry in &data.time_entries {
         tx.execute(
             "INSERT OR REPLACE INTO time_entries (id, project_id, start_time, end_time) VALUES (?1, ?2, ?3, ?4)",
             params![&time_entry.id, &time_entry.project_id, &time_entry.start_time, &time_entry.end_time],
-        ).unwrap();
+        )?;
     }
 
     for invoice in &data.invoices {
         tx.execute(
             "INSERT OR REPLACE INTO invoices (id, client_name, issue_date, due_date, amount, status, currency) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![&invoice.id, &invoice.client_name, &invoice.issue_date, &invoice.due_date, &invoice.amount, &invoice.status, &invoice.currency],
-        ).unwrap();
+        )?;
     }
 
     for expense in &data.expenses {
         tx.execute(
             "INSERT OR REPLACE INTO expenses (id, project_id, description, amount, date, is_billed, is_billable) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![&expense.id, &expense.project_id, &expense.description, &expense.amount, &expense.date, &expense.is_billed, &expense.is_billable],
-        ).unwrap();
+        )?;
     }
 
     tx.execute(
         "INSERT OR REPLACE INTO user_profile (company_name, company_email, company_address, logo) VALUES (?1, ?2, ?3, ?4)",
         params![&data.user_profile.company_name, &data.user_profile.company_email, &data.user_profile.company_address, &data.user_profile.logo],
-    ).unwrap();
+    )?;
 
     for recurring_invoice in &data.recurring_invoices {
         tx.execute(
             "INSERT OR REPLACE INTO recurring_invoices (id, client_name, frequency, next_due_date, amount, currency, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![&recurring_invoice.id, &recurring_invoice.client_name, &recurring_invoice.frequency, &recurring_invoice.next_due_date, &recurring_invoice.amount, &recurring_invoice.currency, &recurring_invoice.status],
-        ).unwrap();
+        )?;
     }
 
     tx.execute(
         "INSERT OR REPLACE INTO tax_settings (rate, internal_cost_rate) VALUES (?1, ?2)",
         params![&data.tax_settings.rate, &data.tax_settings.internal_cost_rate],
-    ).unwrap();
+    )?;
 
     tx.execute(
         "INSERT OR REPLACE INTO currency_settings (default_currency, invoice_language) VALUES (?1, ?2)",
         params![&data.currency_settings.default_currency, &data.currency_settings.invoice_language],
-    ).unwrap();
+    )?;
 
-    tx.commit().unwrap();
+    tx.commit()?;
 
     Ok(())
 }
@@ -241,35 +244,36 @@ fn save_all_data(app_handle: AppHandle, data: AppData) -> Result<(), String> {
 use serde::{Deserialize, Serialize};
 
 #[tauri::command]
-fn get_trial_start_date(app_handle: AppHandle) -> Result<Option<String>, String> {
-    let db_path = get_db_path(&app_handle);
-    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-    let mut stmt = conn.prepare("SELECT start_date FROM trial_info").unwrap();
-    let mut rows = stmt.query([]).unwrap();
-    if let Some(row) = rows.next().unwrap() {
-        Ok(Some(row.get(0).unwrap()))
+fn get_trial_start_date(app_handle: AppHandle) -> Result<Option<String>, Error> {
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)?;
+    let mut stmt = conn.prepare("SELECT start_date FROM trial_info")?;
+    let mut rows = stmt.query([])?;
+    if let Some(row) = rows.next()? {
+        Ok(Some(row.get(0)?))
     } else {
         Ok(None)
     }
 }
 
 #[tauri::command]
-fn set_trial_start_date(app_handle: AppHandle, start_date: String) -> Result<(), String> {
-    let db_path = get_db_path(&app_handle);
-    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-    conn.execute("INSERT INTO trial_info (start_date) VALUES (?1)", params![start_date]).map_err(|e| e.to_string())?;
+fn set_trial_start_date(app_handle: AppHandle, start_date: String) -> Result<(), Error> {
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)?;
+    conn.execute("INSERT INTO trial_info (start_date) VALUES (?1)", params![start_date])?;
     Ok(())
 }
 
 #[tauri::command]
-fn check_trial_status(app_handle: AppHandle) -> Result<i64, String> {
-    let db_path = get_db_path(&app_handle);
-    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-    let mut stmt = conn.prepare("SELECT start_date FROM trial_info").unwrap();
-    let mut rows = stmt.query([]).unwrap();
-    if let Some(row) = rows.next().unwrap() {
-        let start_date_str: String = row.get(0).unwrap();
-        let start_date = chrono::NaiveDate::parse_from_str(&start_date_str, "%Y-%m-%d").unwrap();
+fn check_trial_status(app_handle: AppHandle) -> Result<i64, Error> {
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)?;
+    let mut stmt = conn.prepare("SELECT start_date FROM trial_info")?;
+    let mut rows = stmt.query([])?;
+    if let Some(row) = rows.next()? {
+        let start_date_str: String = row.get(0)?;
+        let start_date = chrono::NaiveDate::parse_from_str(&start_date_str, "%Y-%m-%d")
+            .map_err(|e| Error::DateParse(e.to_string()))?;
         let now = chrono::Local::now().naive_local().date();
         let duration = now.signed_duration_since(start_date);
         let days_left = 14 - duration.num_days();
@@ -295,10 +299,10 @@ struct ApiResponse {
 }
 
 #[tauri::command]
-async fn activate_license(license_key: String) -> Result<bool, String> {
-    let api_key = env::var("LEMON_SQUEEZY_API_KEY").expect("LEMON_SQUEEZY_API_KEY must be set"); // IMPORTANT: Store this securely, e.g., in an environment variable at build time
-    let instance_id = machine_uid::get().unwrap_or_else(|_| "unknown-instance".to_string());
-    
+async fn activate_license(license_key: String) -> Result<bool, Error> {
+    let api_key = env::var("LEMON_SQUEEZY_API_KEY").map_err(|_| Error::Api("LEMON_SQUEEZY_API_KEY must be set".to_string()))?;
+    let instance_id = machine_uid::get().map_err(|_| Error::MachineId)?;
+
     let client = reqwest::Client::new();
     let mut params = std::collections::HashMap::new();
     params.insert("license_key", license_key.as_str());
@@ -308,20 +312,20 @@ async fn activate_license(license_key: String) -> Result<bool, String> {
         .bearer_auth(api_key)
         .json(&params)
         .send()
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
 
     if res.status().is_success() {
-        let body: ApiResponse = res.json().await.map_err(|e| e.to_string())?;
+        let body: ApiResponse = res.json().await?;
         if body.valid && body.license_key.activated {
             // Here, you should save the license key to a local file or the database
             // to check on future app startups.
             Ok(true)
         } else {
-            Ok(false)
+            Err(Error::InvalidLicense)
         }
     } else {
-        Err("Failed to activate license key.".to_string())
+        let error_message = res.text().await?;
+        Err(Error::Api(error_message))
     }
 }
 
@@ -330,8 +334,8 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let handle = app.handle().clone();
-            let db_path = get_db_path(&handle);
-            let conn = Connection::open(&db_path).expect("Failed to open database");
+            let db_path = get_db_path(&handle)?;
+            let conn = Connection::open(&db_path)?;
 
             conn.execute_batch(
                 "CREATE TABLE IF NOT EXISTS clients (
@@ -396,7 +400,7 @@ fn main() {
                     start_date TEXT NOT NULL
                 );
                 "
-            ).expect("Failed to create tables");
+            )?;
 
             app.manage(AppState {
                 db: Mutex::new(conn),
