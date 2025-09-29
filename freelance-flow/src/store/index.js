@@ -159,7 +159,37 @@ const useStore = create((set, get) => ({
     deleteTimeEntry: (id) => set((state) => ({ timeEntries: state.timeEntries.filter((t) => t.id !== id) })),
     addInvoice: (invoice) => set((state) => ({ invoices: [...state.invoices, { ...invoice, id: invoice.id || crypto.randomUUID(), isArchived: false }] })),
     updateInvoice: (invoice) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === invoice.id ? invoice : i)) })),
-    deleteInvoice: (id) => set((state) => ({ invoices: state.invoices.filter((i) => i.id !== id) })),
+    deleteInvoice: (id) => set((state) => {
+        const invoiceToDelete = state.invoices.find(inv => inv.id === id);
+        if (!invoiceToDelete) {
+            return {};
+        }
+
+        const timeEntryIds = invoiceToDelete.items.filter(item => item.id.startsWith('time-')).map(item => item.id.replace('time-', ''));
+        const expenseIds = invoiceToDelete.items.filter(item => item.id.startsWith('exp-')).map(item => item.id.replace('exp-', ''));
+
+        const newTimeEntries = state.timeEntries.map(entry => {
+            if (timeEntryIds.includes(entry.id)) {
+                const { isBilled, invoiceId, ...rest } = entry;
+                return rest;
+            }
+            return entry;
+        });
+
+        const newExpenses = state.expenses.map(expense => {
+            if (expenseIds.includes(expense.id)) {
+                const { isBilled, invoiceId, ...rest } = expense;
+                return rest;
+            }
+            return expense;
+        });
+
+        return {
+            invoices: state.invoices.filter((i) => i.id !== id),
+            timeEntries: newTimeEntries,
+            expenses: newExpenses,
+        };
+    }),
     addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, { ...expense, id: expense.id || crypto.randomUUID(), isArchived: false }] })),
     updateExpense: (id, updates) => set((state) => ({ expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...updates } : e)) })),
     deleteExpense: (id) => set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) })),
