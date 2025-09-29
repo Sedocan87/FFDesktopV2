@@ -49,15 +49,22 @@ const ProjectsView = ({ showToast }) => {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Projects</h1>
                     <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your projects here.</p>
                 </div>
-                <div className="flex gap-4">
-                    <Input type="search" placeholder="Search projects..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                    <Button onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(null); }}>Create Project</Button>
-                </div>
+                <Button onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(null); }}>Create Project</Button>
+            </div>
+
+            <div className="mb-4">
+                <Input
+                    type="text"
+                    placeholder="Search projects..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="max-w-xs"
+                />
             </div>
 
             <Card className="overflow-x-auto">
