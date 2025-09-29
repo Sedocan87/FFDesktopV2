@@ -264,6 +264,19 @@ const useStore = create((set, get) => ({
     updateTaxSettings: (settings) => set({ taxSettings: settings }),
     updateCurrencySettings: (settings) => set({ currencySettings: settings }),
     updateProfitabilitySettings: (settings) => set({ profitabilitySettings: settings }),
+
+    resetAllData: () => set({
+        clients: initialClients,
+        projects: initialProjects,
+        timeEntries: initialTimeEntries,
+        invoices: initialInvoices,
+        expenses: initialExpenses,
+        userProfile: initialUserProfile,
+        recurringInvoices: initialRecurringInvoices,
+        taxSettings: initialTaxSettings,
+        currencySettings: initialCurrencySettings,
+        profitabilitySettings: initialProfitabilitySettings,
+    }),
 }));
 
 if (isTauri()) {

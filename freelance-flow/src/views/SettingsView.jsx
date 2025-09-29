@@ -10,6 +10,8 @@ import { CURRENCIES } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
 import ArchivedItemsView from './ArchivedItemsView';
 
+import ResetData from '../components/ResetData';
+
 const SettingsView = ({ showToast, onImport, onExport }) => {
     const { userProfile, currencySettings, profitabilitySettings, taxSettings, setUserProfile, setCurrencySettings, setProfitabilitySettings, setTaxSettings } = useStore();
     const fileInputRef = useRef(null);
@@ -186,6 +188,10 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
                                             className="hidden"
                                             accept=".db"
                                         />
+                                    </div>
+                                    <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Permanently delete all data. This cannot be undone.</p>
+                                        <ResetData showToast={showToast} />
                                     </div>
                                 </div>
                             </Card>
