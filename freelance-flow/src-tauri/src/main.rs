@@ -311,9 +311,9 @@ struct ProxyRequestBody<'a> {
 async fn activate_license(license_key: String) -> Result<bool, Error> {
     // !!! IMPORTANT !!!
     // 1. REPLACE THIS WITH YOUR REAL VERCEL URL
-    const PROXY_URL: &str = "https://your-project-name.vercel.app/api/activate";
+    const PROXY_URL: &str = "https://ff-desktop-v2.vercel.app/api/activate";
     // 2. GENERATE A STRONG, RANDOM SECRET AND REPLACE THIS
-    const INTERNAL_API_KEY: &str = "REPLACE_WITH_YOUR_STRONG_SECRET_KEY";
+    const INTERNAL_API_KEY: &str = "b36f4a5e097c72ff8441225623357c2f";
 
     let instance_id = machine_uid::get().map_err(|_| Error::MachineId)?;
 
