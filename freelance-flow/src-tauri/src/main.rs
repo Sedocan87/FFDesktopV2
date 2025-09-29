@@ -298,23 +298,40 @@ struct ApiResponse {
     license_key: LicenseKey,
 }
 
+// A new struct for the request body to our proxy
+#[derive(Serialize)]
+struct ProxyRequestBody<'a> {
+    #[serde(rename = "licenseKey")]
+    license_key: &'a str,
+    #[serde(rename = "instanceId")]
+    instance_id: &'a str,
+}
+
 #[tauri::command]
 async fn activate_license(license_key: String) -> Result<bool, Error> {
-    let api_key = env::var("LEMON_SQUEEZY_API_KEY").map_err(|_| Error::Api("LEMON_SQUEEZY_API_KEY must be set".to_string()))?;
+    // !!! IMPORTANT !!!
+    // 1. REPLACE THIS WITH YOUR REAL VERCEL URL
+    const PROXY_URL: &str = "https://your-project-name.vercel.app/api/activate";
+    // 2. GENERATE A STRONG, RANDOM SECRET AND REPLACE THIS
+    const INTERNAL_API_KEY: &str = "REPLACE_WITH_YOUR_STRONG_SECRET_KEY";
+
     let instance_id = machine_uid::get().map_err(|_| Error::MachineId)?;
 
     let client = reqwest::Client::new();
-    let mut params = std::collections::HashMap::new();
-    params.insert("license_key", license_key.as_str());
-    params.insert("instance_id", &instance_id);
 
-    let res = client.post("https://api.lemonsqueezy.com/v1/licenses/activate")
-        .bearer_auth(api_key)
-        .json(&params)
+    let body = ProxyRequestBody {
+        license_key: &license_key,
+        instance_id: &instance_id,
+    };
+
+    let res = client.post(PROXY_URL)
+        .bearer_auth(INTERNAL_API_KEY)
+        .json(&body)
         .send()
         .await?;
 
     if res.status().is_success() {
+        // The proxy forwards the Lemon Squeezy response, so we can use the same ApiResponse struct
         let body: ApiResponse = res.json().await?;
         if body.valid && body.license_key.activated {
             // Here, you should save the license key to a local file or the database
@@ -324,6 +341,7 @@ async fn activate_license(license_key: String) -> Result<bool, Error> {
             Err(Error::InvalidLicense)
         }
     } else {
+        // Forward the error from the proxy
         let error_message = res.text().await?;
         Err(Error::Api(error_message))
     }
