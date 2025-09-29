@@ -57,17 +57,7 @@ const useStore = create((set, get) => ({
     setIsNewProjectDialogOpen: (isOpen) => set({ isNewProjectDialogOpen: isOpen }),
     setIsLogTimeDialogOpen: (isOpen) => set({ isLogTimeDialogOpen: isOpen }),
     setIsAddExpenseDialogOpen: (isOpen) => set({ isAddExpenseDialogOpen: isOpen }),
-    setData: (data) => set(data),
-    setClients: (newClients) => set(state => ({ clients: typeof newClients === 'function' ? newClients(state.clients) : newClients })),
-    setProjects: (newProjects) => set(state => ({ projects: typeof newProjects === 'function' ? newProjects(state.projects) : newProjects })),
-    setTimeEntries: (newTimeEntries) => set(state => ({ timeEntries: typeof newTimeEntries === 'function' ? newTimeEntries(state.timeEntries) : newTimeEntries })),
-    setInvoices: (newInvoices) => set(state => ({ invoices: typeof newInvoices === 'function' ? newInvoices(state.invoices) : newInvoices })),
-    setExpenses: (newExpenses) => set(state => ({ expenses: typeof newExpenses === 'function' ? newExpenses(state.expenses) : newExpenses })),
-    setUserProfile: (newUserProfile) => set(state => ({ userProfile: typeof newUserProfile === 'function' ? newUserProfile(state.userProfile) : newUserProfile })),
-    setRecurringInvoices: (newRecurringInvoices) => set(state => ({ recurringInvoices: typeof newRecurringInvoices === 'function' ? newRecurringInvoices(state.recurringInvoices) : newRecurringInvoices })),
-    setTaxSettings: (newTaxSettings) => set(state => ({ taxSettings: typeof newTaxSettings === 'function' ? newTaxSettings(state.taxSettings) : newTaxSettings })),
-    setCurrencySettings: (newCurrencySettings) => set(state => ({ currencySettings: typeof newCurrencySettings === 'function' ? newCurrencySettings(state.currencySettings) : newCurrencySettings })),
-    setProfitabilitySettings: (newProfitabilitySettings) => set(state => ({ profitabilitySettings: typeof newProfitabilitySettings === 'function' ? newProfitabilitySettings(state.profitabilitySettings) : newProfitabilitySettings })),
+    setData: (key, value) => set(state => ({ [key]: typeof value === 'function' ? value(state[key]) : value })),
     setIsTimerRunning: (isRunning) => set({ isTimerRunning: isRunning }),
     setTimerStartTime: (startTime) => set({ timerStartTime: startTime }),
     setElapsedTime: (time) => set({ elapsedTime: time }),
@@ -292,22 +282,23 @@ const useStore = create((set, get) => ({
     }),
 }));
 
-if (isTauri()) {
-    useStore.subscribe((state) => {
-        if (!state.isLoading) {
-            const dataToSave = getPersistentState(state);
-            invoke('save_all_data', { data: dataToSave }).catch((error) => {
-                console.error('Failed to save data to Tauri:', error);
-            });
-        }
-    });
-} else {
-    useStore.subscribe((state) => {
-        if (!state.isLoading) {
-            const dataToSave = getPersistentState(state);
-            localStorage.setItem('freelanceFlowState', JSON.stringify(dataToSave));
-        }
-    });
-}
+import { debounce } from '../lib/debounce';
+
+const debouncedSave = debounce((data) => {
+    if (isTauri()) {
+        invoke('save_all_data', { data }).catch((error) => {
+            console.error('Failed to save data to Tauri:', error);
+        });
+    } else {
+        localStorage.setItem('freelanceFlowState', JSON.stringify(data));
+    }
+}, 500); // 500ms debounce delay
+
+useStore.subscribe((state) => {
+    if (!state.isLoading) {
+        const dataToSave = getPersistentState(state);
+        debouncedSave(dataToSave);
+    }
+});
 
 export default useStore;

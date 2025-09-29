@@ -13,7 +13,7 @@ import ArchivedItemsView from './ArchivedItemsView';
 import ResetData from '../components/ResetData';
 
 const SettingsView = ({ showToast, onImport, onExport }) => {
-    const { userProfile, currencySettings, profitabilitySettings, taxSettings, setUserProfile, setCurrencySettings, setProfitabilitySettings, setTaxSettings } = useStore();
+    const { userProfile, currencySettings, profitabilitySettings, taxSettings, setData } = useStore();
     const fileInputRef = useRef(null);
     const [activeTab, setActiveTab] = useState('general');
 
@@ -61,10 +61,10 @@ const SettingsView = ({ showToast, onImport, onExport }) => {
     };
 
     const handleSave = () => {
-        setUserProfile(profile);
-        setCurrencySettings(settings);
-        setProfitabilitySettings({ ...profitability, internalCostRate: parseFloat(profitability.internalCostRate) || 0 });
-        setTaxSettings(tax);
+        setData('userProfile', profile);
+        setData('currencySettings', settings);
+        setData('profitabilitySettings', { ...profitability, internalCostRate: parseFloat(profitability.internalCostRate) || 0 });
+        setData('taxSettings', tax);
         showToast('Settings saved successfully!');
     };
     

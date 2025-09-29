@@ -18,8 +18,8 @@ import { EyeIcon, CheckIcon, DownloadIcon, TrashIcon } from '../components/icons
 
 const InvoicesView = ({ showToast }) => {
     const { projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
-        expenses, userProfile, recurringInvoices, setRecurringInvoices,
-        currencySettings, taxSettings, setTimeEntries, setExpenses, setIsNewInvoiceDialogOpen
+        expenses, userProfile, recurringInvoices,
+        currencySettings, taxSettings, setIsNewInvoiceDialogOpen
     } = useStore();
     const [viewingInvoice, setViewingInvoice] = useState(null);
     const [invoiceToMark, setInvoiceToMark] = useState(null);
@@ -241,7 +241,7 @@ const InvoicesView = ({ showToast }) => {
                     )}
 
                     {activeTab === 'recurring' && (
-                        <RecurringInvoicesView clients={clients} recurringInvoices={recurringInvoices} setRecurringInvoices={setRecurringInvoices} showToast={showToast} />
+                        <RecurringInvoicesView clients={clients} recurringInvoices={recurringInvoices} showToast={showToast} />
                     )}
                 </>
             )}

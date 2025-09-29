@@ -7,7 +7,7 @@ import Label from '../components/Label';
 import BillableItemsModal from './BillableItemsModal';
 
 const NewInvoiceDialog = ({ showToast }) => {
-    const { clients, projects, timeEntries, expenses, currencySettings, setTimeEntries, setExpenses, addInvoice, isNewInvoiceDialogOpen, setIsNewInvoiceDialogOpen } = useStore();
+    const { clients, projects, timeEntries, expenses, currencySettings, setData, addInvoice, isNewInvoiceDialogOpen, setIsNewInvoiceDialogOpen } = useStore();
     const [selectedClient, setSelectedClient] = useState(clients.length > 0 ? clients[0].id : '');
     const [isBillableModalOpen, setIsBillableModalOpen] = useState(false);
     const [itemsToBill, setItemsToBill] = useState({ entries: [], expenses: [] });
@@ -81,7 +81,7 @@ const NewInvoiceDialog = ({ showToast }) => {
 
         // Mark entries as billed
         const billedEntryIds = new Set(selectedEntries.map(e => e.id));
-        setTimeEntries(prevEntries =>
+        setData('timeEntries', prevEntries =>
             prevEntries.map(entry =>
                 billedEntryIds.has(entry.id) ? { ...entry, isBilled: true, invoiceId: newInvoice.id } : entry
             )
@@ -89,7 +89,7 @@ const NewInvoiceDialog = ({ showToast }) => {
 
         // Mark expenses as billed
         const billedExpenseIds = new Set(selectedExpenses.map(e => e.id));
-        setExpenses(prevExpenses =>
+        setData('expenses', prevExpenses =>
             prevExpenses.map(expense =>
                 billedExpenseIds.has(expense.id) ? { ...expense, isBilled: true, invoiceId: newInvoice.id } : expense
             )
