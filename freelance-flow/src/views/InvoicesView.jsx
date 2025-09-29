@@ -26,6 +26,81 @@ const InvoicesView = ({ showToast }) => {
     const [invoiceToDelete, setInvoiceToDelete] = useState(null);
     const [activeTab, setActiveTab] = useState('one-time');
 
+    const handleDownloadPdf = (invoice) => {
+        const doc = new jsPDF();
+        const lang = currencySettings.invoiceLanguage || 'en';
+        const t = invoiceTranslations[lang];
+        const client = clients.find(c => c.name === invoice.clientName);
+
+        // Add header
+        doc.setFontSize(20);
+        doc.text(t.invoice, 14, 22);
+
+        // Add company details
+        if (userProfile.logo) {
+            doc.addImage(userProfile.logo, 'PNG', 150, 15, 45, 15);
+        }
+        doc.setFontSize(10);
+        doc.text(userProfile.companyName, 150, 40);
+        doc.text(userProfile.companyAddress, 150, 45);
+        doc.text(userProfile.companyEmail, 150, 50);
+
+        // Add client details
+        doc.setFontSize(12);
+        doc.text(t.billTo, 14, 40);
+        doc.setFontSize(10);
+        doc.text(client?.name || '', 14, 45);
+        doc.text(client?.email || '', 14, 50);
+
+        // Add invoice details
+        doc.setFontSize(10);
+        doc.text(`${t.issueDate} ${invoice.issueDate}`, 14, 60);
+        doc.text(`${t.dueDate} ${invoice.dueDate}`, 14, 65);
+
+        // Add table
+        const tableData = invoice.items.map(item => {
+            const amount = item.hours ? item.hours * item.rate : item.amount;
+            return [
+                item.description,
+                item.hours ? item.hours.toFixed(2) : '-',
+                item.rate ? formatCurrency(item.rate, invoice.currency) : '-',
+                formatCurrency(amount, invoice.currency)
+            ];
+        });
+
+        autoTable(doc, {
+            startY: 75,
+            head: [[t.description, t.quantity, t.rate, t.amount]],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [22, 160, 133] },
+        });
+
+        // Add totals
+        const subtotal = invoice.items.reduce((acc, item) => acc + (item.hours ? item.hours * item.rate : item.amount), 0);
+        const taxAmount = (subtotal * taxSettings.rate) / 100;
+        const total = subtotal + taxAmount;
+
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.text(`${t.subtotal}`, 150, finalY);
+        doc.text(formatCurrency(subtotal, invoice.currency), 180, finalY);
+        finalY += 7;
+        doc.text(`${t.tax} (${taxSettings.rate}%)`, 150, finalY);
+        doc.text(formatCurrency(taxAmount, invoice.currency), 180, finalY);
+        finalY += 7;
+        doc.setFontSize(12);
+        doc.text(`${t.total}`, 150, finalY);
+        doc.text(formatCurrency(total, invoice.currency), 180, finalY);
+
+        // Add thank you message
+        doc.setFontSize(10);
+        doc.text(t.thankYou, 14, doc.internal.pageSize.height - 20);
+
+        doc.save(`Invoice-${invoice.id}.pdf`);
+        showToast('Invoice downloaded successfully!');
+    };
+
     const handleStatusChange = async (invoiceId, newStatus) => {
         const invoice = invoices.find(inv => inv.id === invoiceId);
         if (invoice) {
