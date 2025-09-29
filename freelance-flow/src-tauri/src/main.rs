@@ -176,69 +176,60 @@ fn save_all_data(app_handle: AppHandle, data: AppData) -> Result<(), String> {
 
     let tx = conn.transaction().unwrap();
 
-    tx.execute("DELETE FROM clients", []).unwrap();
     for client in &data.clients {
         tx.execute(
-            "INSERT INTO clients (id, name, email) VALUES (?1, ?2, ?3)",
+            "INSERT OR REPLACE INTO clients (id, name, email) VALUES (?1, ?2, ?3)",
             params![&client.id, &client.name, &client.email],
         ).unwrap();
     }
 
-    tx.execute("DELETE FROM projects", []).unwrap();
     for project in &data.projects {
         tx.execute(
-            "INSERT INTO projects (id, name, client_id, rate) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR REPLACE INTO projects (id, name, client_id, rate) VALUES (?1, ?2, ?3, ?4)",
             params![&project.id, &project.name, &project.client_id, &project.rate],
         ).unwrap();
     }
 
-    tx.execute("DELETE FROM time_entries", []).unwrap();
     for time_entry in &data.time_entries {
         tx.execute(
-            "INSERT INTO time_entries (id, project_id, start_time, end_time) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR REPLACE INTO time_entries (id, project_id, start_time, end_time) VALUES (?1, ?2, ?3, ?4)",
             params![&time_entry.id, &time_entry.project_id, &time_entry.start_time, &time_entry.end_time],
         ).unwrap();
     }
 
-    tx.execute("DELETE FROM invoices", []).unwrap();
     for invoice in &data.invoices {
         tx.execute(
-            "INSERT INTO invoices (id, client_name, issue_date, due_date, amount, status, currency) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT OR REPLACE INTO invoices (id, client_name, issue_date, due_date, amount, status, currency) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![&invoice.id, &invoice.client_name, &invoice.issue_date, &invoice.due_date, &invoice.amount, &invoice.status, &invoice.currency],
         ).unwrap();
     }
 
-    tx.execute("DELETE FROM expenses", []).unwrap();
     for expense in &data.expenses {
         tx.execute(
-            "INSERT INTO expenses (id, project_id, description, amount, date, is_billed, is_billable) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT OR REPLACE INTO expenses (id, project_id, description, amount, date, is_billed, is_billable) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![&expense.id, &expense.project_id, &expense.description, &expense.amount, &expense.date, &expense.is_billed, &expense.is_billable],
         ).unwrap();
     }
 
-    tx.execute("DELETE FROM user_profile", []).unwrap();
     tx.execute(
-        "INSERT INTO user_profile (company_name, company_email, company_address, logo) VALUES (?1, ?2, ?3, ?4)",
+        "INSERT OR REPLACE INTO user_profile (company_name, company_email, company_address, logo) VALUES (?1, ?2, ?3, ?4)",
         params![&data.user_profile.company_name, &data.user_profile.company_email, &data.user_profile.company_address, &data.user_profile.logo],
     ).unwrap();
 
-    tx.execute("DELETE FROM recurring_invoices", []).unwrap();
     for recurring_invoice in &data.recurring_invoices {
         tx.execute(
-            "INSERT INTO recurring_invoices (id, client_name, frequency, next_due_date, amount, currency, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT OR REPLACE INTO recurring_invoices (id, client_name, frequency, next_due_date, amount, currency, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![&recurring_invoice.id, &recurring_invoice.client_name, &recurring_invoice.frequency, &recurring_invoice.next_due_date, &recurring_invoice.amount, &recurring_invoice.currency, &recurring_invoice.status],
         ).unwrap();
     }
 
-    tx.execute("DELETE FROM tax_settings", []).unwrap();
     tx.execute(
-        "INSERT INTO tax_settings (rate, internal_cost_rate) VALUES (?1, ?2)",
+        "INSERT OR REPLACE INTO tax_settings (rate, internal_cost_rate) VALUES (?1, ?2)",
         params![&data.tax_settings.rate, &data.tax_settings.internal_cost_rate],
     ).unwrap();
 
-    tx.execute("DELETE FROM currency_settings", []).unwrap();
     tx.execute(
-        "INSERT INTO currency_settings (default_currency, invoice_language) VALUES (?1, ?2)",
+        "INSERT OR REPLACE INTO currency_settings (default_currency, invoice_language) VALUES (?1, ?2)",
         params![&data.currency_settings.default_currency, &data.currency_settings.invoice_language],
     ).unwrap();
 
