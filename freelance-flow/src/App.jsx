@@ -38,8 +38,6 @@ const MainApp = ({ isLicensed, isTrialExpired, daysLeft }) => {
         clients, projects, timeEntries, invoices, expenses, userProfile,
         recurringInvoices, taxSettings, currencySettings, profitabilitySettings,
         isLoading, isTimerRunning, timerStartTime, elapsedTime, timerProjectId,
-        setData, setClients, setProjects, setTimeEntries, setInvoices, setExpenses,
-        setUserProfile, setRecurringInvoices, setTaxSettings, setCurrencySettings,
         setIsTimerRunning, setTimerStartTime, setElapsedTime, setTimerProjectId,
         loadInitialData, setIsNewInvoiceDialogOpen, setIsNewProjectDialogOpen,
         setIsLogTimeDialogOpen, setIsAddExpenseDialogOpen,
