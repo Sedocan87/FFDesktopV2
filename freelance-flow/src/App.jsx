@@ -26,7 +26,9 @@ import AddExpenseDialog from './views/AddExpenseDialog';
 import KanbanView from './views/KanbanView';
 import FAB from './components/FAB';
 
-const App = () => {
+import TrialExpiredView from './views/TrialExpiredView';
+
+const MainApp = ({ isLicensed, isTrialExpired, daysLeft }) => {
     const [activeView, setActiveView] = useState('dashboard');
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -73,15 +75,15 @@ const App = () => {
             }
         };
     }, [isTimerRunning, timerStartTime, setElapsedTime]);
-    
-     useEffect(() => {
+
+    useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
     }, [isDarkMode]);
-    
+
     const handleExportData = async () => {
         try {
             const data = await invoke('export_database');
@@ -117,6 +119,11 @@ const App = () => {
         }
     };
 
+    const handlePurchase = () => {
+        // Replace with your Lemon Squeezy product URL
+        window.open('https://www.lemonsqueezy.com/buy/your-product-id', '_blank');
+    };
+
     const NavLink = ({ view, icon, children }) => (
         <a
             href="#"
@@ -128,15 +135,15 @@ const App = () => {
             }}
             className={`flex items-center px-4 py-2.5 rounded-lg transition-colors ${
                 activeView === view
-                ? 'bg-slate-900 text-white shadow dark:bg-slate-50 dark:text-slate-900'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+                    ? 'bg-slate-900 text-white shadow dark:bg-slate-50 dark:text-slate-900'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
         >
             {React.cloneElement(icon, { className: "w-5 h-5 mr-3" })}
             <span className="font-medium">{children}</span>
         </a>
     );
-    
+
     const clientProjectCounts = useMemo(() => {
         const clientNameMap = clients.reduce((acc, client) => {
             acc[client.id] = client.name;
@@ -156,7 +163,7 @@ const App = () => {
         if (isLoading) {
             return <div className="flex justify-center items-center h-64"><p className="text-xl text-slate-500">Loading your data...</p></div>;
         }
-        
+
         switch (activeView) {
             case 'dashboard': return <DashboardView />;
             case 'projects': return <ProjectsView showToast={showToast} />;
@@ -169,7 +176,7 @@ const App = () => {
             default: return <DashboardView />;
         }
     };
-    
+
     const fabActions = [
         {
             icon: <FileTextIcon className="w-6 h-6" />,
@@ -194,7 +201,7 @@ const App = () => {
     ];
 
     const sidebarContent = (
-         <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
             <div className="p-6 border-b dark:border-slate-800">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-200">FreelanceFlow</h1>
             </div>
@@ -208,11 +215,24 @@ const App = () => {
                 <NavLink view="reporting" icon={<ChartBarIcon />}>Reporting</NavLink>
             </nav>
             <div className="p-4 border-t dark:border-slate-800 space-y-2">
-                 <NavLink view="settings" icon={<SettingsIcon />}>Settings</NavLink>
+                {!isLicensed && (
+                    <button 
+                        onClick={handlePurchase} 
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transform transition-transform duration-200 hover:scale-105"
+                    >
+                        Buy License
+                    </button>
+                )}
+                {!isLicensed && !isTrialExpired && (
+                    <div className="p-2 text-center text-sm text-slate-500 dark:text-slate-400">
+                        You have {daysLeft} days left in your trial.
+                    </div>
+                )}
+                <NavLink view="settings" icon={<SettingsIcon />}>Settings</NavLink>
                 <div className="flex justify-between items-center p-2">
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Local App</span>
-                     <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
-                        {isDarkMode ? <SunIcon className="w-5 h-5"/> : <MoonIcon className="w-5 h-5"/>}
+                    <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
+                        {isDarkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
                     </button>
                 </div>
             </div>
@@ -221,7 +241,7 @@ const App = () => {
 
     return (
         <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-50`}>
-             <style>{`
+            <style>{`
                 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
                 .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
                 .animate-toast-in { animation: toastIn 0.5s ease-out forwards; }
@@ -229,9 +249,9 @@ const App = () => {
                 @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
                 @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
             `}</style>
-            
+
             {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
-            
+
             {/* Mobile Sidebar */}
             <div className={`fixed inset-0 z-40 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:hidden`}>
                 {sidebarContent}
@@ -261,10 +281,54 @@ const App = () => {
             <NewProjectDialog showToast={showToast} />
             <LogTimeDialog showToast={showToast} />
             <AddExpenseDialog showToast={showToast} />
-            <FAB actions={fabActions} />
+            <FAB actions={fabActions} disabled={!isLicensed && isTrialExpired} />
         </div>
     );
-};
+}
 
+const App = () => {
+    const [isLicensed, setIsLicensed] = useState(false);
+    const [isLoadingLicense, setIsLoadingLicense] = useState(true);
+    const [isTrialExpired, setIsTrialExpired] = useState(false);
+    const [daysLeft, setDaysLeft] = useState(0);
+
+    useEffect(() => {
+        const checkLicenseAndTrial = async () => {
+            const savedKey = localStorage.getItem('license_key');
+            if (savedKey) {
+                setIsLicensed(true);
+                setIsLoadingLicense(false);
+                return;
+            }
+
+            const trialStartDate = await invoke('get_trial_start_date');
+            if (!trialStartDate) {
+                const today = new Date().toISOString().slice(0, 10);
+                await invoke('set_trial_start_date', { startDate: today });
+            }
+
+            const daysLeftInTrial = await invoke('check_trial_status');
+            setDaysLeft(daysLeftInTrial);
+
+            if (daysLeftInTrial <= 0) {
+                setIsTrialExpired(true);
+            }
+            
+            setIsLoadingLicense(false);
+        };
+
+        checkLicenseAndTrial();
+    }, []);
+
+    if (isLoadingLicense) {
+        return <div>Loading...</div>; // Or a splash screen
+    }
+
+    if (!isLicensed && isTrialExpired) {
+        return <TrialExpiredView onActivationSuccess={() => setIsLicensed(true)} />;
+    }
+
+    return <MainApp isLicensed={isLicensed} isTrialExpired={isTrialExpired} daysLeft={daysLeft} />;
+}
 
 export default App;

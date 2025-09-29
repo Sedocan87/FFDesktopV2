@@ -7,6 +7,8 @@ use tauri::{AppHandle, Manager, State};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
+use reqwest;
+use chrono::prelude::*;
 use models::{
     Client, Project, TimeEntry, Invoice, Expense, UserProfile,
     RecurringInvoice, TaxSettings, CurrencySettings,
@@ -243,6 +245,93 @@ fn save_all_data(app_handle: AppHandle, data: AppData) -> Result<(), String> {
     Ok(())
 }
 
+use serde::{Deserialize, Serialize};
+
+#[tauri::command]
+fn get_trial_start_date(app_handle: AppHandle) -> Result<Option<String>, String> {
+    let db_path = get_db_path(&app_handle);
+    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT start_date FROM trial_info").unwrap();
+    let mut rows = stmt.query([]).unwrap();
+    if let Some(row) = rows.next().unwrap() {
+        Ok(Some(row.get(0).unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+#[tauri::command]
+fn set_trial_start_date(app_handle: AppHandle, start_date: String) -> Result<(), String> {
+    let db_path = get_db_path(&app_handle);
+    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute("INSERT INTO trial_info (start_date) VALUES (?1)", params![start_date]).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn check_trial_status(app_handle: AppHandle) -> Result<i64, String> {
+    let db_path = get_db_path(&app_handle);
+    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT start_date FROM trial_info").unwrap();
+    let mut rows = stmt.query([]).unwrap();
+    if let Some(row) = rows.next().unwrap() {
+        let start_date_str: String = row.get(0).unwrap();
+        let start_date = chrono::NaiveDate::parse_from_str(&start_date_str, "%Y-%m-%d").unwrap();
+        let now = chrono::Local::now().naive_local().date();
+        let duration = now.signed_duration_since(start_date);
+        let days_left = 14 - duration.num_days();
+        Ok(days_left)
+    } else {
+        Ok(14)
+    }
+}
+
+// Define structs to match Lemon Squeezy's API response
+
+// Define structs to match Lemon Squeezy's API response
+#[derive(Serialize, Deserialize, Debug)]
+struct LicenseKey {
+    activated: bool,
+    // Add other fields you might need from the response
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ApiResponse {
+    valid: bool,
+    license_key: LicenseKey,
+}
+
+#[tauri::command]
+async fn activate_license(license_key: String) -> Result<bool, String> {
+    let api_key = "YOUR_LEMON_SQUEEZY_API_KEY"; // IMPORTANT: Store this securely, e.g., in an environment variable at build time
+    let instance_id = machine_uid::get().unwrap_or_else(|_| "unknown-instance".to_string());
+    
+    let client = reqwest::Client::new();
+    let mut params = std::collections::HashMap::new();
+    params.insert("license_key", license_key.as_str());
+    params.insert("instance_id", &instance_id);
+
+    let res = client.post("https://api.lemonsqueezy.com/v1/licenses/activate")
+        .bearer_auth(api_key)
+        .json(&params)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if res.status().is_success() {
+        let body: ApiResponse = res.json().await.map_err(|e| e.to_string())?;
+        if body.valid && body.license_key.activated {
+            // Here, you should save the license key to a local file or the database
+            // to check on future app startups.
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    } else {
+        Err("Failed to activate license key.".to_string())
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -309,6 +398,9 @@ fn main() {
                     default_currency TEXT NOT NULL,
                     invoice_language TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS trial_info (
+                    start_date TEXT NOT NULL
+                );
                 "
             ).expect("Failed to create tables");
 
@@ -325,6 +417,10 @@ fn main() {
             import_database,
             load_all_data,
             save_all_data,
+            activate_license,
+            get_trial_start_date,
+            set_trial_start_date,
+            check_trial_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
