@@ -9,6 +9,8 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use reqwest;
 use chrono::prelude::*;
+use dotenv::dotenv;
+use std::env;
 use models::{
     Client, Project, TimeEntry, Invoice, Expense, UserProfile,
     RecurringInvoice, TaxSettings, CurrencySettings,
@@ -303,7 +305,7 @@ struct ApiResponse {
 
 #[tauri::command]
 async fn activate_license(license_key: String) -> Result<bool, String> {
-    let api_key = "YOUR_LEMON_SQUEEZY_API_KEY"; // IMPORTANT: Store this securely, e.g., in an environment variable at build time
+    let api_key = env::var("LEMON_SQUEEZY_API_KEY").expect("LEMON_SQUEEZY_API_KEY must be set"); // IMPORTANT: Store this securely, e.g., in an environment variable at build time
     let instance_id = machine_uid::get().unwrap_or_else(|_| "unknown-instance".to_string());
     
     let client = reqwest::Client::new();
@@ -333,6 +335,7 @@ async fn activate_license(license_key: String) -> Result<bool, String> {
 }
 
 fn main() {
+    dotenv().ok();
     tauri::Builder::default()
         .setup(|app| {
             let handle = app.handle().clone();

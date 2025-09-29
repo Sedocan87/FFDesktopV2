@@ -77,3 +77,4 @@ dist/
 # Playwright
 playwright-report/
 test-results/
+.env
