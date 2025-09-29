@@ -6,21 +6,22 @@ import Dialog from '../components/Dialog';
 import Input from '../components/Input';
 import Label from '../components/Label';
 import Select from '../components/Select';
-import Pagination from '../components/Pagination';
-import { usePagination } from '../hooks/usePagination';
 import { EditIcon, ArchiveIcon } from '../components/icons';
 
 const ProjectsView = ({ showToast }) => {
     const { projects, clients, timeEntries, addProject, updateProject, setIsNewProjectDialogOpen, setEditingProject, archiveProject, setActiveProject } = useStore();
     const [projectToArchive, setProjectToArchive] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+
     const activeProjects = useMemo(() => projects.filter(p => !p.isArchived), [projects]);
 
     const filteredProjects = useMemo(() => {
-        return activeProjects.filter(project =>
-            project.name.toLowerCase().includes(searchTerm.toLowerCase())
+        if (!searchQuery) return activeProjects;
+        return activeProjects.filter(p => 
+            p.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [activeProjects, searchTerm]);
+    }, [activeProjects, searchQuery]);
+    
 
     const clientMap = useMemo(() => clients.reduce((acc, client) => {
         acc[client.id] = client.name;
@@ -37,6 +38,7 @@ const ProjectsView = ({ showToast }) => {
             }, {});
     }, [timeEntries, activeProjects]);
 
+    
     const handleArchiveProject = async () => {
         if (projectToArchive) {
             await archiveProject(projectToArchive.id);
@@ -45,26 +47,17 @@ const ProjectsView = ({ showToast }) => {
         }
     };
 
-    const paginatedProjects = usePagination(filteredProjects, 10);
-
     return (
         <div>
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Projects</h1>
                     <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your projects here.</p>
                 </div>
-                <Button onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(null); }}>Create New Project</Button>
-            </div>
-
-            <div className="mb-4">
-                <Input
-                    type="text"
-                    placeholder="Search projects..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-xs"
-                />
+                <div className="flex gap-4">
+                    <Input type="search" placeholder="Search projects..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                    <Button onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(null); }}>Create Project</Button>
+                </div>
             </div>
 
             <Card className="overflow-x-auto">
@@ -78,7 +71,7 @@ const ProjectsView = ({ showToast }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y dark:divide-slate-800">
-                        {paginatedProjects.currentData.map(project => (
+                        {filteredProjects.map(project => (
                              <tr key={project.id}>
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-300">
                                     <a href="#" onClick={(e) => { e.preventDefault(); setActiveProject(project); }} className="hover:underline">
@@ -101,13 +94,6 @@ const ProjectsView = ({ showToast }) => {
                         ))}
                     </tbody>
                 </table>
-                <Pagination
-                    currentPage={paginatedProjects.currentPage}
-                    maxPage={paginatedProjects.maxPage}
-                    goToPage={paginatedProjects.goToPage}
-                    nextPage={paginatedProjects.nextPage}
-                    prevPage={paginatedProjects.prevPage}
-                />
             </Card>
 
             <Dialog isOpen={!!projectToArchive} onClose={() => setProjectToArchive(null)} title="Archive Project">
