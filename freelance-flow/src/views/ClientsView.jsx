@@ -14,6 +14,7 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingClient, setEditingClient] = useState(null);
     const [clientToArchive, setClientToArchive] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [formName, setFormName] = useState('');
     const [formEmail, setFormEmail] = useState('');
@@ -61,16 +62,33 @@ const ClientsView = ({ showToast, clientProjectCounts }) => {
 
     const activeClients = useMemo(() => clients.filter(client => !client.isArchived), [clients]);
 
-    const paginatedClients = usePagination(activeClients, 10);
+    const filteredClients = useMemo(() => {
+        return activeClients.filter(client =>
+            client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.email.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [activeClients, searchTerm]);
+
+    const paginatedClients = usePagination(filteredClients, 10);
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Clients</h1>
                     <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your clients here.</p>
                 </div>
                 <Button onClick={openAddDialog}>Add New Client</Button>
+            </div>
+
+            <div className="mb-4">
+                <Input
+                    type="text"
+                    placeholder="Search clients..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-xs"
+                />
             </div>
 
             <Card className="overflow-x-auto">

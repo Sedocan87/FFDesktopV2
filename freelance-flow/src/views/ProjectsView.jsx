@@ -13,7 +13,14 @@ import { EditIcon, ArchiveIcon } from '../components/icons';
 const ProjectsView = ({ showToast }) => {
     const { projects, clients, timeEntries, addProject, updateProject, setIsNewProjectDialogOpen, setEditingProject, archiveProject, setActiveProject } = useStore();
     const [projectToArchive, setProjectToArchive] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
     const activeProjects = useMemo(() => projects.filter(p => !p.isArchived), [projects]);
+
+    const filteredProjects = useMemo(() => {
+        return activeProjects.filter(project =>
+            project.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [activeProjects, searchTerm]);
 
     const clientMap = useMemo(() => clients.reduce((acc, client) => {
         acc[client.id] = client.name;
@@ -38,16 +45,26 @@ const ProjectsView = ({ showToast }) => {
         }
     };
 
-    const paginatedProjects = usePagination(activeProjects, 10);
+    const paginatedProjects = usePagination(filteredProjects, 10);
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Projects</h1>
                     <p className="mt-1 text-slate-600 dark:text-slate-400">Manage your projects here.</p>
                 </div>
                 <Button onClick={() => { setIsNewProjectDialogOpen(true); setEditingProject(null); }}>Create New Project</Button>
+            </div>
+
+            <div className="mb-4">
+                <Input
+                    type="text"
+                    placeholder="Search projects..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-xs"
+                />
             </div>
 
             <Card className="overflow-x-auto">
