@@ -34,7 +34,7 @@ const ActivationView = ({ onActivationSuccess }) => {
     return (
         // Style this view to look good
         <div>
-            <h2>Activate FreelanceFlow</h2>
+            <h2>Activate Zentie</h2>
             <input
                 type="text"
                 value={licenseKey}

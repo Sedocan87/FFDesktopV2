@@ -120,7 +120,7 @@ const ReportingView = () => {
                 return !!projectTimeEntry;
             });
 
-            const currency = projectInvoices.length > 0 ? projectInvoices[0].currency : profitabilitySettings.default;
+            const currency = projectInvoices.length > 0 ? projectInvoices[0].currency : currencySettings.default;
 
             return { id: project.id, name: project.name, currency, revenue, cost: totalCost, profit, margin };
         });

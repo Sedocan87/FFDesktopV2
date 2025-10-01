@@ -2,9 +2,6 @@ import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import { isTauri } from '../lib/tauri';
 import {
-    initialClients,
-    initialProjects,
-    initialTimeEntries,
     initialInvoices,
     initialExpenses,
     initialUserProfile,
@@ -28,9 +25,9 @@ const getPersistentState = (state) => ({
 });
 
 const useStore = create((set, get) => ({
-    clients: initialClients,
-    projects: initialProjects,
-    timeEntries: initialTimeEntries,
+    clients: [],
+    projects: [],
+    timeEntries: [],
     invoices: initialInvoices,
     expenses: initialExpenses,
     userProfile: initialUserProfile,
@@ -109,7 +106,7 @@ const useStore = create((set, get) => ({
             }
         } else {
             try {
-                const savedState = localStorage.getItem('freelanceFlowState');
+                const savedState = localStorage.getItem('zentieState');
                 if (savedState) {
                     set({ ...JSON.parse(savedState), isLoading: false });
                 } else {
@@ -269,16 +266,12 @@ const useStore = create((set, get) => ({
     updateProfitabilitySettings: (settings) => set({ profitabilitySettings: settings }),
 
     resetAllData: () => set({
-        clients: initialClients,
-        projects: initialProjects,
-        timeEntries: initialTimeEntries,
-        invoices: initialInvoices,
-        expenses: initialExpenses,
-        userProfile: initialUserProfile,
-        recurringInvoices: initialRecurringInvoices,
-        taxSettings: initialTaxSettings,
-        currencySettings: initialCurrencySettings,
-        profitabilitySettings: initialProfitabilitySettings,
+        clients: [],
+        projects: [],
+        timeEntries: [],
+        invoices: [],
+        expenses: [],
+        recurringInvoices: [],
     }),
 }));
 
@@ -290,7 +283,7 @@ const debouncedSave = debounce((data) => {
             console.error('Failed to save data to Tauri:', error);
         });
     } else {
-        localStorage.setItem('freelanceFlowState', JSON.stringify(data));
+        localStorage.setItem('zentieState', JSON.stringify(data));
     }
 }, 500); // 500ms debounce delay
 

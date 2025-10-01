@@ -1,5 +1,5 @@
 {
-  "identifier": "com.freelanceflow.dev",
+  "identifier": "com.zentie.dev",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -9,7 +9,7 @@
   "app": {
     "windows": [
       {
-        "title": "FreelanceFlow",
+        "title": "Zentie",
         "label": "main"
       }
     ]

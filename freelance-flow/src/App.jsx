@@ -87,7 +87,7 @@ const MainApp = ({ isLicensed, isTrialExpired, daysLeft }) => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `freelanceflow_backup_${new Date().toISOString().split('T')[0]}.db`;
+            link.download = `zentie_backup_${new Date().toISOString().split('T')[0]}.db`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

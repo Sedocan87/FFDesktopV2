@@ -39,7 +39,7 @@ const TrialExpiredView = ({ onActivationSuccess }) => {
     return (
         <div>
             <h2>Trial Expired</h2>
-            <p>Your 14-day free trial has expired. To continue using FreelanceFlow, please purchase a license.</p>
+            <p>Your 14-day free trial has expired. To continue using Zentie, please purchase a license.</p>
             <button onClick={handlePurchase}>Purchase License</button>
             
             <hr />

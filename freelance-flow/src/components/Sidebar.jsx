@@ -43,7 +43,7 @@ const Sidebar = ({
     return (
         <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
             <div className="p-6 border-b dark:border-slate-800">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-200">FreelanceFlow</h1>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-200">Zentie</h1>
             </div>
             <nav className="flex-1 p-4 space-y-2">
                 <NavLink view="dashboard" icon={<HomeIcon />} {...navLinkProps}>Dashboard</NavLink>

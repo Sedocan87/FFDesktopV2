@@ -1,12 +1,12 @@
-# FreelanceFlow
+# Zentie
 
-![FreelanceFlow Logo](icon.png)
+![Zentie Logo](icon.png)
 
 A powerful and intuitive desktop application for freelancers to manage their projects, clients, time tracking, and invoices.
 
 ## Introduction
 
-FreelanceFlow is a comprehensive solution for freelancers to streamline their workflow and manage their business efficiently. It provides a user-friendly interface to track projects, manage clients, log work hours, and generate professional invoices. The application is built with Tauri, React, and Zustand, offering a fast, secure, and cross-platform experience.
+Zentie is a comprehensive solution for freelancers to streamline their workflow and manage their business efficiently. It provides a user-friendly interface to track projects, manage clients, log work hours, and generate professional invoices. The application is built with Tauri, React, and Zustand, offering a fast, secure, and cross-platform experience.
 
 ## Features
 

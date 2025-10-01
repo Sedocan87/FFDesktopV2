@@ -6,7 +6,7 @@ const Header = ({ onMenuClick }) => (
         <button onClick={onMenuClick}>
             <MenuIcon className="w-6 h-6 text-slate-600 dark:text-slate-300" />
         </button>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-200">FreelanceFlow</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-200">Zentie</h1>
         <div className="w-6"></div>
     </header>
 );

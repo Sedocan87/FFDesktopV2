@@ -1,14 +1,8 @@
-export const initialClients = [
-    { id: "client-1", name: "Test Client", email: "test@client.com", isArchived: false }
-];
+export const initialClients = [];
 
-export const initialProjects = [
-    { id: "project-1", name: "Test Project", clientId: "client-1", rate: 100, isArchived: false, createdAt: new Date().toISOString(), tasks: [] }
-];
+export const initialProjects = [];
 
-export const initialTimeEntries = [
-    { id: "time-1", projectId: "project-1", start_time: new Date().toISOString(), end_time: new Date(Date.now() + 1000 * 60 * 60).toISOString(), hours: 1, isBilled: false, invoiceId: null }
-];
+export const initialTimeEntries = [];
 
 export const initialInvoices = [];
 
