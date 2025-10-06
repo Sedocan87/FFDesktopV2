@@ -10,6 +10,7 @@ import {
 } from './components/icons/index';
 
 // --- Views ---
+// A comment to force a reload
 import DashboardView from './views/DashboardView';
 import ProjectsView from './views/ProjectsView';
 import ClientsView from './views/ClientsView';
@@ -23,6 +24,8 @@ import NewProjectDialog from './views/NewProjectDialog';
 import LogTimeDialog from './views/LogTimeDialog';
 import AddExpenseDialog from './views/AddExpenseDialog';
 import KanbanView from './views/KanbanView';
+import InvoiceStudioView from './views/InvoiceStudioView';
+
 import FAB from './components/FAB';
 
 import TrialExpiredView from './views/TrialExpiredView';
@@ -149,6 +152,7 @@ const MainApp = ({ isLicensed, isTrialExpired, daysLeft }) => {
             case 'reporting': return <ReportingView />;
             case 'expenses': return <ExpensesView showToast={showToast} />;
             case 'settings': return <SettingsView showToast={showToast} onImport={handleImport} onExport={handleExportData} />;
+
             default: return <DashboardView />;
         }
     };

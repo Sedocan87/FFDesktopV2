@@ -10,13 +10,16 @@ import Label from '../components/Label';
 import InvoiceDetailView from './InvoiceDetailView';
 import RecurringInvoicesView from './RecurringInvoicesView';
 import BillableItemsModal from './BillableItemsModal';
+import InvoiceStudioView from './InvoiceStudioView';
 import { formatCurrency } from '../lib/utils';
 import { invoiceTranslations } from '../lib/invoiceTranslations';
 import Pagination from '../components/Pagination';
 import { usePagination } from '../hooks/usePagination';
-import { EyeIcon, CheckIcon, DownloadIcon, TrashIcon } from '../components/icons';
+import { EyeIcon, CheckIcon, DownloadIcon, TrashIcon, EditIcon } from '../components/icons';
 
-const InvoicesView = ({ showToast }) => {
+import Toast from '../components/Toast';
+
+const InvoicesView = () => {
     const { projects, clients, timeEntries, invoices, addInvoice, updateInvoice, deleteInvoice,
         expenses, userProfile, recurringInvoices,
         currencySettings, taxSettings, setIsNewInvoiceDialogOpen
@@ -25,6 +28,14 @@ const InvoicesView = ({ showToast }) => {
     const [invoiceToMark, setInvoiceToMark] = useState(null);
     const [invoiceToDelete, setInvoiceToDelete] = useState(null);
     const [activeTab, setActiveTab] = useState('one-time');
+    const [showStudio, setShowStudio] = useState(false);
+    const [editingInvoice, setEditingInvoice] = useState(null);
+    const [showChoiceDialog, setShowChoiceDialog] = useState(false);
+    const [toastMessage, setToastMessage] = useState(null);
+
+    const showToast = (message) => {
+        setToastMessage(message);
+    };
 
     const handleDownloadPdf = (invoice) => {
         const doc = new jsPDF();
@@ -135,6 +146,10 @@ const InvoicesView = ({ showToast }) => {
     const activeInvoices = useMemo(() => invoices.filter(invoice => !invoice.isArchived), [invoices]);
     const paginatedInvoices = usePagination(activeInvoices, 10);
 
+    if (showStudio) {
+        return <InvoiceStudioView onBack={() => { setShowStudio(false); setEditingInvoice(null); }} invoiceToEdit={editingInvoice} showToast={showToast} />; 
+    }
+
     return (
         <div>
             {viewingInvoice ? (
@@ -154,7 +169,7 @@ const InvoicesView = ({ showToast }) => {
                             <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Invoices</h1>
                             <p className="mt-1 text-slate-600 dark:text-slate-400">Create and manage your client invoices.</p>
                         </div>
-                        <Button onClick={() => setIsNewInvoiceDialogOpen(true)}>Create New Invoice</Button>
+                        <Button onClick={() => setShowChoiceDialog(true)}>Create New Invoice</Button>
                     </div>
 
                     <div className="border-b dark:border-slate-800 mb-6">
@@ -211,6 +226,12 @@ const InvoicesView = ({ showToast }) => {
                                             <td className="p-4 text-slate-800 dark:text-slate-100 text-right font-mono">{formatCurrency(invoice.amount, invoice.currency)}</td>
                                             <td className="p-4 text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" className="px-2" onClick={() => {
+                                                        setEditingInvoice(invoice);
+                                                        setShowStudio(true);
+                                                    }}>
+                                                        <EditIcon className="w-4 h-4" />
+                                                    </Button>
                                                     <Button variant="ghost" className="px-2" onClick={() => handleDownloadPdf(invoice)}>
                                                         <DownloadIcon className="w-4 h-4" />
                                                     </Button>
@@ -261,6 +282,22 @@ const InvoicesView = ({ showToast }) => {
                     <Button variant="destructive" onClick={handleConfirmMarkAsPaid}>Yes</Button>
                 </div>
             </Dialog>
+
+            <Dialog isOpen={showChoiceDialog} onClose={() => setShowChoiceDialog(false)} title="Create New Invoice">
+                <p>How would you like to create your new invoice?</p>
+                <div className="flex justify-end gap-4 mt-6">
+                    <Button variant="secondary" onClick={() => {
+                        setShowChoiceDialog(false);
+                        setIsNewInvoiceDialogOpen(true);
+                    }}>From Billable Items</Button>
+                    <Button onClick={() => {
+                        setShowChoiceDialog(false);
+                        setShowStudio(true);
+                    }}>From Scratch (Studio)</Button>
+                </div>
+            </Dialog>
+
+            {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
         </div>
     );
 };

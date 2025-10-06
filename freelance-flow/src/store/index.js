@@ -22,6 +22,7 @@ const getPersistentState = (state) => ({
     taxSettings: state.taxSettings,
     currencySettings: state.currencySettings,
     profitabilitySettings: state.profitabilitySettings,
+    invoiceTemplates: state.invoiceTemplates,
 });
 
 const useStore = create((set, get) => ({
@@ -35,6 +36,7 @@ const useStore = create((set, get) => ({
     taxSettings: initialTaxSettings,
     currencySettings: initialCurrencySettings,
     profitabilitySettings: initialProfitabilitySettings,
+    invoiceTemplates: [],
     isLoading: true,
     isTimerRunning: false,
     timerStartTime: null,
@@ -148,12 +150,13 @@ const useStore = create((set, get) => ({
     updateInvoice: (invoice) => set((state) => ({ invoices: state.invoices.map((i) => (i.id === invoice.id ? invoice : i)) })),
     deleteInvoice: (id) => set((state) => {
         const invoiceToDelete = state.invoices.find(inv => inv.id === id);
+        console.log('invoiceToDelete', invoiceToDelete);
         if (!invoiceToDelete) {
             return {};
         }
 
-        const timeEntryIds = invoiceToDelete.items.filter(item => item.id.startsWith('time-')).map(item => item.id.replace('time-', ''));
-        const expenseIds = invoiceToDelete.items.filter(item => item.id.startsWith('exp-')).map(item => item.id.replace('exp-', ''));
+        const timeEntryIds = invoiceToDelete.items ? invoiceToDelete.items.filter(item => item && item.id && item.id.startsWith('time-')).map(item => item.id.replace('time-', '')) : [];
+        const expenseIds = invoiceToDelete.items ? invoiceToDelete.items.filter(item => item && item.id && item.id.startsWith('exp-')).map(item => item.id.replace('exp-', '')) : [];
 
         const newTimeEntries = state.timeEntries.map(entry => {
             if (timeEntryIds.includes(entry.id)) {
@@ -264,6 +267,9 @@ const useStore = create((set, get) => ({
     updateTaxSettings: (settings) => set({ taxSettings: settings }),
     updateCurrencySettings: (settings) => set({ currencySettings: settings }),
     updateProfitabilitySettings: (settings) => set({ profitabilitySettings: settings }),
+    addInvoiceTemplate: (template) => set((state) => ({ invoiceTemplates: [...state.invoiceTemplates, template] })),
+    deleteInvoiceTemplate: (id) => set((state) => ({ invoiceTemplates: state.invoiceTemplates.filter((t) => t.id !== id) })),
+    addStudioInvoice: (invoice) => set((state) => ({ invoices: [...state.invoices, { ...invoice, id: invoice.id || crypto.randomUUID(), isArchived: false }] })),
 
     resetAllData: () => set({
         clients: [],
